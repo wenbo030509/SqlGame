@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQL学习游戏客户端</title>
+    <script src="sql-wasm.js"></script>
     <style>
         * {
             margin: 0;
@@ -751,9 +752,100 @@
         let currentLevel = null;
         // 已完成关卡
         let completedLevels = new Set();
+        // 数据库实例
+        let db = null;
+        
+        // 初始化数据库
+        async function initDatabase() {
+            try {
+                // 加载SQL.js
+                const SQL = await initSqlJs({
+                    locateFile: filename => filename
+                });
+                
+                // 创建内存数据库
+                db = new SQL.Database();
+                
+                // 创建表结构
+                db.exec(`
+                    CREATE TABLE student (
+                        id INTEGER PRIMARY KEY,
+                        name TEXT,
+                        age INTEGER,
+                        class_id INTEGER
+                    );
+                    
+                    CREATE TABLE class (
+                        id INTEGER PRIMARY KEY,
+                        class_name TEXT,
+                        teacher TEXT
+                    );
+                    
+                    CREATE TABLE course (
+                        id INTEGER PRIMARY KEY,
+                        course_name TEXT,
+                        credit INTEGER
+                    );
+                    
+                    CREATE TABLE score (
+                        student_id INTEGER,
+                        course_id INTEGER,
+                        score INTEGER,
+                        PRIMARY KEY (student_id, course_id)
+                    );
+                `);
+                
+                // 插入模拟数据
+                db.exec(`
+                    INSERT INTO student VALUES 
+                    (1, '张三', 18, 1),
+                    (2, '李四', 19, 1),
+                    (3, '王五', 17, 2),
+                    (4, '赵六', 18, 2),
+                    (5, '钱七', 19, 3),
+                    (6, '孙八', 17, 3),
+                    (7, '周九', 18, 1),
+                    (8, '吴十', 19, 2),
+                    (9, '郑一', 17, 3),
+                    (10, '王二', 18, 1);
+                    
+                    INSERT INTO class VALUES 
+                    (1, '高一(1)班', '张老师'),
+                    (2, '高一(2)班', '李老师'),
+                    (3, '高一(3)班', '王老师');
+                    
+                    INSERT INTO course VALUES 
+                    (1, '数学', 5),
+                    (2, '英语', 4),
+                    (3, '物理', 4),
+                    (4, '化学', 3),
+                    (5, '生物', 3);
+                    
+                    INSERT INTO score VALUES 
+                    (1, 1, 90),
+                    (1, 2, 85),
+                    (1, 3, 95),
+                    (2, 1, 88),
+                    (2, 2, 92),
+                    (2, 3, 80),
+                    (3, 1, 75),
+                    (3, 2, 85),
+                    (3, 3, 90),
+                    (4, 1, 92),
+                    (4, 2, 88),
+                    (4, 3, 95);
+                `);
+                
+                console.log('数据库初始化成功');
+            } catch (error) {
+                console.error('数据库初始化失败:', error);
+            }
+        }
         
         // 初始化
-        function init() {
+        async function init() {
+            // 初始化数据库
+            await initDatabase();
             // 加载本地存储的进度
             loadProgress();
             // 绑定事件
@@ -925,8 +1017,8 @@
             const startTime = performance.now();
             
             try {
-                // 模拟SQL执行
-                const result = executeMockSQL(sql);
+                // 真实SQL执行
+                const result = executeRealSQL(sql);
                 const endTime = performance.now();
                 const executionTime = (endTime - startTime).toFixed(2);
                 
@@ -955,313 +1047,38 @@
             }
         }
         
-        // 模拟SQL执行
-        function executeMockSQL(sql) {
-            // 保留原始SQL用于显示，同时创建大写版本用于解析
-            const originalSql = sql;
-            const upperSql = sql.toUpperCase();
-            
-            if (upperSql.includes('SELECT') && upperSql.includes('FROM')) {
-                // 提取表名
-                const fromIndex = upperSql.indexOf('FROM');
-                let tableName = upperSql.substring(fromIndex + 4).trim().split(' ')[0].toLowerCase();
-                
-                // 处理不同的表
-                let data = [];
-                if (tableName === 'student') {
-                    data = [...mockData.student];
-                } else if (tableName === 'class') {
-                    data = [...mockData.class];
-                } else if (tableName === 'course') {
-                    data = [...mockData.course];
-                } else if (tableName === 'score') {
-                    data = [...mockData.score];
-                }
-                
-                // 处理JOIN
-                if (upperSql.includes('JOIN')) {
-                    // 简单的JOIN处理
-                    if (upperSql.includes('JOIN CLASS')) {
-                        const result = [];
-                        mockData.student.forEach(student => {
-                            const classInfo = mockData.class.find(c => c.id === student.class_id);
-                            if (classInfo) {
-                                result.push({
-                                    name: student.name,
-                                    class_name: classInfo.class_name
-                                });
-                            }
-                        });
-                        return formatTable(result);
-                    } else if (upperSql.includes('JOIN STUDENT') && upperSql.includes('JOIN COURSE')) {
-                        // 处理多表JOIN
-                        const result = [];
-                        mockData.score.forEach(score => {
-                            const student = mockData.student.find(s => s.id === score.student_id);
-                            const course = mockData.course.find(c => c.id === score.course_id);
-                            if (student && course) {
-                                result.push({
-                                    name: student.name,
-                                    course_name: course.course_name,
-                                    score: score.score
-                                });
-                            }
-                        });
-                        return formatTable(result);
-                    } else if (upperSql.includes('JOIN STUDENT') && upperSql.includes('JOIN CLASS')) {
-                        // 处理综合挑战的JOIN
-                        const result = [];
-                        const classScores = {};
-                        
-                        mockData.score.forEach(score => {
-                            const student = mockData.student.find(s => s.id === score.student_id);
-                            if (student) {
-                                if (!classScores[student.class_id]) {
-                                    classScores[student.class_id] = {
-                                        total: 0,
-                                        count: 0
-                                    };
-                                }
-                                classScores[student.class_id].total += score.score;
-                                classScores[student.class_id].count += 1;
-                            }
-                        });
-                        
-                        Object.entries(classScores).forEach(([classId, scores]) => {
-                            const classInfo = mockData.class.find(c => c.id === parseInt(classId));
-                            if (classInfo) {
-                                result.push({
-                                    class_name: classInfo.class_name,
-                                    平均成绩: (scores.total / scores.count).toFixed(2)
-                                });
-                            }
-                        });
-                        
-                        // 按平均成绩降序排序
-                        result.sort((a, b) => parseFloat(b.平均成绩) - parseFloat(a.平均成绩));
-                        return formatTable(result);
-                    }
-                }
-                
-                // 处理WHERE条件
-                if (upperSql.includes('WHERE')) {
-                    const whereClause = upperSql.substring(upperSql.indexOf('WHERE') + 5).trim();
-                    if (whereClause.includes('AGE > 18')) {
-                        data = data.filter(item => item.age > 18);
-                    } else if (whereClause.includes('AGE < 18')) {
-                        data = data.filter(item => item.age < 18);
-                    } else if (whereClause.includes('AGE = 18')) {
-                        data = data.filter(item => item.age === 18);
-                    } else if (whereClause.includes('NAME LIKE')) {
-                        // 处理LIKE模糊查询
-                        const likeMatch = whereClause.match(/NAME LIKE '(.*)'/);
-                        if (likeMatch) {
-                            const pattern = likeMatch[1].replace(/%/g, '.*');
-                            const regex = new RegExp(pattern);
-                            data = data.filter(item => regex.test(item.name));
-                        }
-                    } else if (whereClause.includes('CLASS_ID IN')) {
-                        // 处理IN条件查询
-                        const inMatch = whereClause.match(/CLASS_ID IN \(([^)]+)\)/);
-                        if (inMatch) {
-                            const classIds = inMatch[1].split(',').map(id => parseInt(id.trim()));
-                            data = data.filter(item => classIds.includes(item.class_id));
-                        }
-                    } else if (whereClause.includes('AGE > 18 AND CLASS_ID = 1')) {
-                        // 处理多条件查询
-                        data = data.filter(item => item.age > 18 && item.class_id === 1);
-                    }
-                }
-                
-                // 处理ORDER BY
-                if (upperSql.includes('ORDER BY')) {
-                    const orderByClause = upperSql.substring(upperSql.indexOf('ORDER BY') + 8).trim();
-                    if (orderByClause.includes('AGE DESC')) {
-                        data.sort((a, b) => b.age - a.age);
-                    } else if (orderByClause.includes('AGE ASC')) {
-                        data.sort((a, b) => a.age - b.age);
-                    }
-                }
-                
-                // 处理LIMIT
-                if (upperSql.includes('LIMIT')) {
-                    const limitMatch = upperSql.match(/LIMIT\s+(\d+)/);
-                    if (limitMatch) {
-                        const limit = parseInt(limitMatch[1]);
-                        data = data.slice(0, limit);
-                    }
-                }
-                
-                // 处理DISTINCT
-                if (upperSql.includes('DISTINCT')) {
-                    if (upperSql.includes('DISTINCT CLASS_ID')) {
-                        const classIds = [...new Set(mockData.student.map(s => s.class_id))];
-                        return formatTable(classIds.map(id => ({ class_id: id })));
-                    }
-                }
-                
-                // 处理聚合函数
-                if (upperSql.includes('COUNT(')) {
-                    if (upperSql.includes('COUNT(*)')) {
-                        return formatTable([{ count: data.length }]);
-                    }
-                } else if (upperSql.includes('AVG(')) {
-                    if (upperSql.includes('AVG(AGE)')) {
-                        const avgAge = data.reduce((sum, item) => sum + item.age, 0) / data.length;
-                        return formatTable([{ avg: avgAge.toFixed(2) }]);
-                    }
-                } else if (upperSql.includes('SUM(')) {
-                    if (upperSql.includes('SUM(SCORE)')) {
-                        const sumScore = data.reduce((sum, item) => sum + item.score, 0);
-                        return formatTable([{ sum: sumScore }]);
-                    }
-                } else if (upperSql.includes('MAX(')) {
-                    if (upperSql.includes('MAX(AGE)')) {
-                        const maxAge = Math.max(...data.map(item => item.age));
-                        return formatTable([{ max: maxAge }]);
-                    } else if (upperSql.includes('MAX(SCORE)')) {
-                        const maxScore = Math.max(...data.map(item => item.score));
-                        return formatTable([{ max: maxScore }]);
-                    }
-                } else if (upperSql.includes('MIN(')) {
-                    if (upperSql.includes('MIN(AGE)')) {
-                        const minAge = Math.min(...data.map(item => item.age));
-                        return formatTable([{ min: minAge }]);
-                    } else if (upperSql.includes('MIN(SCORE)')) {
-                        const minScore = Math.min(...data.map(item => item.score));
-                        return formatTable([{ min: minScore }]);
-                    }
-                }
-                
-                // 处理GROUP BY
-                if (upperSql.includes('GROUP BY')) {
-                    if (upperSql.includes('GROUP BY CLASS_ID')) {
-                        const grouped = {};
-                        mockData.student.forEach(student => {
-                            if (!grouped[student.class_id]) {
-                                grouped[student.class_id] = 0;
-                            }
-                            grouped[student.class_id]++;
-                        });
-                        let result = Object.entries(grouped).map(([class_id, count]) => ({
-                            class_id: parseInt(class_id),
-                            count
-                        }));
-                        
-                        // 处理HAVING
-                        if (upperSql.includes('HAVING')) {
-                            if (upperSql.includes('HAVING COUNT(*) > 3')) {
-                                result = result.filter(item => item.count > 3);
-                            }
-                        }
-                        
-                        return formatTable(result);
-                    }
-                }
-                
-                // 处理子查询
-                if (upperSql.includes('SELECT.*FROM.*WHERE') || upperSql.includes('WHERE.*SELECT')) {
-                    if (upperSql.includes('SCORE > (SELECT AVG(SCORE) FROM SCORE)')) {
-                        const avgScore = mockData.score.reduce((sum, item) => sum + item.score, 0) / mockData.score.length;
-                        const result = mockData.score
-                            .filter(item => item.score > avgScore)
-                            .map(item => ({ student_id: item.student_id }));
-                        return formatTable(result);
-                    }
-                }
-                
-                // 处理窗口函数
-                if (upperSql.includes('RANK()')) {
-                    const ranked = [...mockData.score]
-                        .sort((a, b) => b.score - a.score)
-                        .map((item, index, array) => {
-                            let rank = index + 1;
-                            if (index > 0 && item.score === array[index - 1].score) {
-                                rank = array[index - 1].rank;
-                            }
-                            return {
-                                student_id: item.student_id,
-                                score: item.score,
-                                rank
-                            };
-                        });
-                    return formatTable(ranked);
-                }
-                
-                // 处理CASE语句
-                if (upperSql.includes('CASE')) {
-                    if (upperSql.includes('CASE WHEN')) {
-                        const result = [];
-                        mockData.score.forEach(score => {
-                            const student = mockData.student.find(s => s.id === score.student_id);
-                            if (student) {
-                                let level;
-                                if (score.score >= 90) {
-                                    level = '优秀';
-                                } else if (score.score >= 80) {
-                                    level = '良好';
-                                } else if (score.score >= 70) {
-                                    level = '中等';
-                                } else if (score.score >= 60) {
-                                    level = '及格';
-                                } else {
-                                    level = '不及格';
-                                }
-                                result.push({
-                                    name: student.name,
-                                    score: score.score,
-                                    等级: level
-                                });
-                            }
-                        });
-                        return formatTable(result);
-                    }
-                }
-                
-                // 处理日期函数（出生年份计算）
-                if (upperSql.includes('2026 - AGE')) {
-                    const result = mockData.student.map(student => ({
-                        name: student.name,
-                        age: student.age,
-                        出生年份: 2026 - student.age
-                    }));
-                    return formatTable(result);
-                }
-                
-                // 处理SELECT * 或指定字段
-                if (upperSql.includes('SELECT *')) {
-                    return formatTable(data);
-                } else {
-                    // 处理指定字段和别名
-                    const selectClause = upperSql.substring(upperSql.indexOf('SELECT') + 6, upperSql.indexOf('FROM')).trim();
-                    const fieldExpressions = selectClause.split(',').map(expr => expr.trim());
-                    
-                    const result = data.map(item => {
-                        const newItem = {};
-                        fieldExpressions.forEach(expr => {
-                            if (expr.includes('AS')) {
-                                // 处理别名
-                                const parts = expr.split('AS').map(part => part.trim());
-                                const fieldName = parts[0].toLowerCase();
-                                const alias = parts[1];
-                                if (item[fieldName]) {
-                                    newItem[alias] = item[fieldName];
-                                }
-                            } else {
-                                // 处理普通字段
-                                const fieldName = expr.toLowerCase();
-                                if (item[fieldName]) {
-                                    newItem[fieldName] = item[fieldName];
-                                }
-                            }
-                        });
-                        return newItem;
-                    });
-                    return formatTable(result);
-                }
+        // 真实SQL执行
+        function executeRealSQL(sql) {
+            if (!db) {
+                throw new Error('数据库未初始化');
             }
             
-            throw new Error('SQL语句解析失败');
+            try {
+                // 执行SQL
+                const result = db.exec(sql);
+                
+                // 处理查询结果
+                if (result.length > 0) {
+                    const statement = result[0];
+                    if (statement.columns && statement.values) {
+                        // 构建结果数据
+                        const data = statement.values.map(row => {
+                            const item = {};
+                            statement.columns.forEach((column, index) => {
+                                item[column] = row[index];
+                            });
+                            return item;
+                        });
+                        return formatTable(data);
+                    } else {
+                        return '<div class="success-message">SQL执行成功</div>';
+                    }
+                } else {
+                    return '<div class="success-message">SQL执行成功</div>';
+                }
+            } catch (error) {
+                throw new Error(error.message);
+            }
         }
         
         // 格式化表格
