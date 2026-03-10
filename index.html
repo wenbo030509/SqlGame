@@ -80,6 +80,26 @@
             color: #1976d2;
         }
         
+        .level-item.bookmarked {
+            background-color: #fff9c4;
+            border-color: #ffeb3b;
+            color: #f57f17;
+        }
+        
+        .level-item.bookmarked::after {
+            content: '★';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f57f17;
+            font-size: 16px;
+        }
+        
+        .level-item {
+            position: relative;
+        }
+        
         /* 右侧主内容区 */
         .main-content {
             display: flex;
@@ -435,6 +455,8 @@
             
             <!-- 语法按钮区 -->
             <div class="syntax-buttons">
+                <button class="syntax-btn" data-syntax="SELECT *" data-example="SELECT * FROM table_name;
+SELECT * FROM student;">SELECT *</button>
                 <button class="syntax-btn" data-syntax="SELECT" data-example="SELECT * FROM table_name;
 SELECT column1, column2 FROM table_name;">SELECT</button>
                 <button class="syntax-btn" data-syntax="FROM" data-example="SELECT * FROM table_name;">FROM</button>
@@ -444,8 +466,12 @@ SELECT * FROM student WHERE age > 18;">WHERE</button>
 SELECT * FROM student ORDER BY age DESC;">ORDER BY</button>
                 <button class="syntax-btn" data-syntax="GROUP BY" data-example="SELECT column, COUNT(*) FROM table_name GROUP BY column;
 SELECT class_id, COUNT(*) FROM student GROUP BY class_id;">GROUP BY</button>
+                <button class="syntax-btn" data-syntax="HAVING" data-example="SELECT column, COUNT(*) FROM table_name GROUP BY column HAVING condition;
+SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 2;">HAVING</button>
                 <button class="syntax-btn" data-syntax="JOIN" data-example="SELECT * FROM table1 JOIN table2 ON table1.id = table2.id;
 SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id;">JOIN</button>
+                <button class="syntax-btn" data-syntax="CASE" data-example="SELECT column, CASE WHEN condition THEN result1 ELSE result2 END FROM table_name;
+SELECT name, CASE WHEN age >= 18 THEN '成年' ELSE '未成年' END AS age_group FROM student;">CASE</button>
                 <button class="syntax-btn" data-syntax="COUNT()" data-example="SELECT COUNT(*) FROM table_name;
 SELECT COUNT(DISTINCT column) FROM table_name;">COUNT()</button>
                 <button class="syntax-btn" data-syntax="SUM()" data-example="SELECT SUM(column) FROM table_name;
@@ -788,6 +814,8 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
         let currentLevel = null;
         // 已完成关卡
         let completedLevels = new Set();
+        // 已标记关卡
+        let bookmarkedLevels = new Set();
         // 数据库实例
         let db = null;
         
@@ -901,11 +929,43 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                     }
                 });
             }
+            
+            const bookmarked = localStorage.getItem('bookmarkedLevels');
+            if (bookmarked) {
+                bookmarkedLevels = new Set(JSON.parse(bookmarked));
+                // 更新标记状态
+                bookmarkedLevels.forEach(levelId => {
+                    const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+                    if (levelItem) {
+                        levelItem.classList.add('bookmarked');
+                    }
+                });
+            }
         }
         
         // 保存进度
         function saveProgress() {
             localStorage.setItem('completedLevels', JSON.stringify([...completedLevels]));
+        }
+        
+        // 保存标签进度
+        function saveBookmarkProgress() {
+            localStorage.setItem('bookmarkedLevels', JSON.stringify([...bookmarkedLevels]));
+        }
+        
+        // 切换标签状态
+        function toggleBookmark(levelId) {
+            const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (levelItem) {
+                if (bookmarkedLevels.has(levelId)) {
+                    bookmarkedLevels.delete(levelId);
+                    levelItem.classList.remove('bookmarked');
+                } else {
+                    bookmarkedLevels.add(levelId);
+                    levelItem.classList.add('bookmarked');
+                }
+                saveBookmarkProgress();
+            }
         }
         
         // 绑定事件
@@ -915,6 +975,13 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 item.addEventListener('click', () => {
                     const levelId = parseInt(item.dataset.level);
                     loadLevel(levelId);
+                });
+                
+                // 关卡右键点击事件（标记/取消标记）
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const levelId = parseInt(item.dataset.level);
+                    toggleBookmark(levelId);
                 });
             });
             
@@ -1057,31 +1124,45 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                         
                         <h4>基础语法</h4>
                         <ul style="margin-left: 20px; margin-bottom: 20px;">
-                            <li><strong>SELECT</strong> - 用于从表中选择数据</li>
-                            <li><strong>FROM</strong> - 指定要查询的表</li>
-                            <li><strong>WHERE</strong> - 过滤数据的条件</li>
-                            <li><strong>ORDER BY</strong> - 对结果进行排序</li>
-                            <li><strong>GROUP BY</strong> - 对数据进行分组</li>
-                            <li><strong>JOIN</strong> - 连接多个表</li>
-                            <li><strong>LIMIT</strong> - 限制结果数量</li>
+                            <li><strong>SELECT</strong> - 用于从表中选择数据，可以使用*选择所有字段或指定具体字段</li>
+                            <li><strong>FROM</strong> - 指定要查询的表名</li>
+                            <li><strong>WHERE</strong> - 过滤数据的条件，支持各种运算符（=, >, <, LIKE, IN等）</li>
+                            <li><strong>ORDER BY</strong> - 对结果进行排序，ASC表示升序，DESC表示降序</li>
+                            <li><strong>GROUP BY</strong> - 对数据进行分组，通常与聚合函数一起使用</li>
+                            <li><strong>HAVING</strong> - 对分组后的结果进行过滤，类似于WHERE但作用于分组</li>
+                            <li><strong>JOIN</strong> - 连接多个表，根据关联字段合并数据</li>
+                            <li><strong>LIMIT</strong> - 限制返回结果的行数</li>
                         </ul>
                         
                         <h4>常用函数</h4>
                         <ul style="margin-left: 20px; margin-bottom: 20px;">
-                            <li><strong>COUNT()</strong> - 计算行数</li>
-                            <li><strong>SUM()</strong> - 计算总和</li>
-                            <li><strong>AVG()</strong> - 计算平均值</li>
-                            <li><strong>MAX()</strong> - 找出最大值</li>
-                            <li><strong>MIN()</strong> - 找出最小值</li>
-                            <li><strong>DISTINCT</strong> - 去重</li>
+                            <li><strong>COUNT()</strong> - 计算行数，COUNT(*)统计所有行，COUNT(字段)统计非空值</li>
+                            <li><strong>SUM()</strong> - 计算数值字段的总和</li>
+                            <li><strong>AVG()</strong> - 计算数值字段的平均值</li>
+                            <li><strong>MAX()</strong> - 找出字段中的最大值</li>
+                            <li><strong>MIN()</strong> - 找出字段中的最小值</li>
+                            <li><strong>DISTINCT</strong> - 去除重复值，返回唯一值</li>
+                            <li><strong>CASE</strong> - 条件判断语句，类似于编程中的if-else，用于实现条件逻辑</li>
+                        </ul>
+                        
+                        <h4>操作符</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>=</strong> - 等于</li>
+                            <li><strong>></strong> - 大于</li>
+                            <li><strong><</strong> - 小于</li>
+                            <li><strong>LIKE</strong> - 模糊匹配，支持%通配符</li>
+                            <li><strong>IN</strong> - 在指定值列表中匹配</li>
+                            <li><strong>AND</strong> - 逻辑与，所有条件都满足</li>
+                            <li><strong>OR</strong> - 逻辑或，任一条件满足</li>
                         </ul>
                         
                         <h4>操作提示</h4>
                         <ul style="margin-left: 20px; margin-bottom: 20px;">
-                            <li>将鼠标悬停在下方的语法按钮上，查看详细用法</li>
+                            <li>将鼠标悬停在下方的语法按钮上，查看详细用法和示例</li>
                             <li>点击语法按钮可以快速插入SQL片段到编辑器</li>
                             <li>在编辑器中输入SQL语句，点击"执行SQL"按钮查看结果</li>
                             <li>可以尝试不同的SQL语法，体验执行效果</li>
+                            <li>点击"查看表结构"按钮可以查看所有表的详细信息和数据</li>
                         </ul>
                         
                         <h4>示例SQL</h4>
@@ -1092,10 +1173,20 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                             <code>SELECT name, age FROM student;</code>
                             <p>3. 查询年龄大于18的学生：</p>
                             <code>SELECT * FROM student WHERE age > 18;</code>
-                            <p>4. 按年龄排序：</p>
+                            <p>4. 按年龄降序排序：</p>
                             <code>SELECT * FROM student ORDER BY age DESC;</code>
                             <p>5. 统计每个班级的学生人数：</p>
                             <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id;</code>
+                            <p>6. 查询学生人数大于2的班级：</p>
+                            <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 2;</code>
+                            <p>7. 根据年龄对学生分组：</p>
+                            <code>SELECT name, CASE WHEN age >= 18 THEN '成年' ELSE '未成年' END AS age_group FROM student;</code>
+                            <p>8. 查询姓名中包含'张'的学生：</p>
+                            <code>SELECT * FROM student WHERE name LIKE '%张%';</code>
+                            <p>9. 查询班级ID为1或2的学生：</p>
+                            <code>SELECT * FROM student WHERE class_id IN (1, 2);</code>
+                            <p>10. 查询年龄大于18且班级ID为1的学生：</p>
+                            <code>SELECT * FROM student WHERE age > 18 AND class_id = 1;</code>
                         </div>
                     </div>
                 `;
