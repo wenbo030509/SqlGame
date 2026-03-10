@@ -1014,40 +1014,37 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 
                 // 显示表结构信息
                 document.getElementById('level-tables').innerHTML = `
-                    <div class="table-info">
-                        <div class="table-info-title">表结构</div>
-                        <div class="table-structure">
-                            <div class="table-name">student (学生表)</div>
-                            <div class="table-fields">
-                                <div class="field-item">id: INTEGER (主键)</div>
-                                <div class="field-item">name: TEXT (姓名)</div>
-                                <div class="field-item">age: INTEGER (年龄)</div>
-                                <div class="field-item">class_id: INTEGER (班级ID)</div>
-                            </div>
+                    <div class="table-structure">
+                        <div class="table-name">student (学生表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">name: TEXT (姓名)</div>
+                            <div class="field-item">age: INTEGER (年龄)</div>
+                            <div class="field-item">class_id: INTEGER (班级ID)</div>
                         </div>
-                        <div class="table-structure">
-                            <div class="table-name">class (班级表)</div>
-                            <div class="table-fields">
-                                <div class="field-item">id: INTEGER (主键)</div>
-                                <div class="field-item">class_name: TEXT (班级名称)</div>
-                                <div class="field-item">teacher: TEXT (班主任)</div>
-                            </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">class (班级表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">class_name: TEXT (班级名称)</div>
+                            <div class="field-item">teacher: TEXT (班主任)</div>
                         </div>
-                        <div class="table-structure">
-                            <div class="table-name">course (课程表)</div>
-                            <div class="table-fields">
-                                <div class="field-item">id: INTEGER (主键)</div>
-                                <div class="field-item">course_name: TEXT (课程名称)</div>
-                                <div class="field-item">credit: INTEGER (学分)</div>
-                            </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">course (课程表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">course_name: TEXT (课程名称)</div>
+                            <div class="field-item">credit: INTEGER (学分)</div>
                         </div>
-                        <div class="table-structure">
-                            <div class="table-name">score (成绩表)</div>
-                            <div class="table-fields">
-                                <div class="field-item">student_id: INTEGER (学生ID)</div>
-                                <div class="field-item">course_id: INTEGER (课程ID)</div>
-                                <div class="field-item">score: INTEGER (成绩)</div>
-                            </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">score (成绩表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">student_id: INTEGER (学生ID)</div>
+                            <div class="field-item">course_id: INTEGER (课程ID)</div>
+                            <div class="field-item">score: INTEGER (成绩)</div>
                         </div>
                     </div>
                 `;
