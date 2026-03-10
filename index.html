@@ -20,7 +20,6 @@
         .container {
             display: grid;
             grid-template-columns: 280px 1fr;
-            grid-template-rows: 1fr 60px;
             height: 100vh;
         }
         
@@ -371,22 +370,7 @@
             color: #d32f2f;
         }
         
-        /* 底部状态栏 */
-        .status-bar {
-            grid-column: 1 / -1;
-            background-color: #fff;
-            border-top: 1px solid #e0e0e0;
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-        
-        .status-info {
-            color: #757575;
-            font-size: 13px;
-        }
+
     </style>
 </head>
 <body>
@@ -496,10 +480,7 @@
             </div>
         </div>
         
-        <!-- 底部状态栏 -->
-        <div class="status-bar">
-            <div class="status-info" id="status-info">选择关卡开始学习</div>
-        </div>
+
     </div>
     
     <script>
@@ -864,7 +845,6 @@
             document.getElementById('sql-editor').value = '';
             document.getElementById('result-area').innerHTML = '执行结果将显示在这里';
             document.getElementById('execution-time').textContent = '执行时间：0ms';
-            document.getElementById('status-info').textContent = `当前关卡：${level.title}`;
         }
         
         // 更新表信息
