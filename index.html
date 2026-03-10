@@ -12,235 +12,145 @@
         }
         
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: #f5f5f5;
             color: #333;
         }
         
         .container {
             display: grid;
-            grid-template-columns: 250px 1fr;
-            grid-template-rows: 1fr 100px;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 1fr 60px;
             height: 100vh;
         }
         
         /* 左侧关卡列表 */
         .level-list {
             background-color: #fff;
-            border-right: 1px solid #ddd;
+            border-right: 1px solid #e0e0e0;
             padding: 20px;
             overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        
+        .level-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a1a1a;
         }
         
         .level-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         
         .level-group-title {
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-weight: 600;
+            margin-bottom: 12px;
             color: #4CAF50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .level-item {
-            padding: 8px 12px;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            padding: 10px 16px;
+            margin-bottom: 6px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            border: 1px solid transparent;
         }
         
         .level-item:hover {
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
+            border-color: #e0e0e0;
         }
         
         .level-item.completed {
             background-color: #e8f5e8;
             color: #4CAF50;
+            border-color: #c8e6c9;
+        }
+        
+        .level-item.active {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1976d2;
         }
         
         /* 右侧主内容区 */
         .main-content {
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 24px;
+            background-color: #fafafa;
         }
         
-        .level-info {
+        /* 问题描述区 */
+        .problem-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .level-title {
-            font-size: 24px;
-            margin-bottom: 10px;
+        .problem-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
         }
         
-        .level-description {
-            margin-bottom: 10px;
-            line-height: 1.5;
+        .problem-description {
+            margin-bottom: 16px;
+            line-height: 1.6;
+            color: #424242;
         }
         
-        .level-hint {
-            background-color: #f0f8ff;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        
-        .level-tables {
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        
-        /* 语法按钮区 */
-        .syntax-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-        }
-        
-        .syntax-btn {
-            padding: 6px 12px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
+        .problem-constraints {
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
             font-size: 14px;
         }
         
-        .syntax-btn:hover {
-            background-color: #e8f5e8;
-        }
-        
-        /* SQL编辑器 */
-        .sql-editor {
-            flex: 1;
-            margin-bottom: 15px;
-        }
-        
-        .editor-textarea {
-            width: 100%;
-            height: 100%;
-            padding: 10px;
-            font-family: 'Courier New', monospace;
+        .problem-hint {
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #e3f2fd;
+            border-radius: 6px;
             font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: none;
+            color: #1976d2;
+            display: none;
         }
         
-        /* 操作按钮区 */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+        /* 表结构区 */
+        .table-info {
+            margin-bottom: 16px;
         }
         
-        .action-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .table-info-title {
+            font-weight: 600;
+            margin-bottom: 8px;
             font-size: 14px;
         }
         
-        .execute-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .hint-btn {
-            background-color: #2196F3;
-            color: white;
-        }
-        
-        .table-btn {
-            background-color: #ff9800;
-            color: white;
-        }
-        
-        /* 结果展示区 */
-        .result-area {
-            flex: 1;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
-            overflow: auto;
-        }
-        
-        .result-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .result-table th, .result-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .result-table th {
-            background-color: #f2f2f2;
-        }
-        
-        .error-message {
-            color: #f44336;
-            padding: 10px;
-            background-color: #ffebee;
-            border-radius: 4px;
-        }
-        
-        .success-message {
-            color: #4CAF50;
-            padding: 10px;
-            background-color: #e8f5e8;
-            border-radius: 4px;
-        }
-        
-        /* 底部进度条 */
-        .progress-bar {
-            grid-column: 1 / -1;
-            background-color: #fff;
-            border-top: 1px solid #ddd;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .progress-text {
-            margin-right: 20px;
-        }
-        
-        .progress-bar-container {
-            flex: 1;
-            height: 20px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .progress-bar-fill {
-            height: 100%;
-            background-color: #4CAF50;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        /* 表结构展示 */
         .table-structure {
-            margin-top: 10px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            font-size: 14px;
         }
         
         .table-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #616161;
         }
         
         .table-fields {
@@ -248,7 +158,259 @@
         }
         
         .field-item {
-            margin-bottom: 2px;
+            margin-bottom: 3px;
+            color: #757575;
+        }
+        
+        /* 语法按钮区 */
+        .syntax-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .syntax-btn {
+            padding: 6px 14px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .syntax-btn:hover {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1976d2;
+        }
+        
+        /* SQL编辑器 */
+        .editor-section {
+            flex: 1;
+            margin-bottom: 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+            font-size: 14px;
+            background-color: #fafafa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        .sql-editor {
+            flex: 1;
+            padding: 16px;
+        }
+        
+        .editor-textarea {
+            width: 100%;
+            height: 100%;
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            resize: none;
+            line-height: 1.5;
+        }
+        
+        .editor-textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+        
+        /* 操作按钮区 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .execute-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .execute-btn:hover {
+            background-color: #388E3C;
+        }
+        
+        .hint-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .hint-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .table-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .table-btn:hover {
+            background-color: #F57C00;
+        }
+        
+        /* 结果展示区 */
+        .result-section {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+            font-size: 14px;
+            background-color: #fafafa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .execution-time {
+            font-size: 12px;
+            color: #757575;
+        }
+        
+        .result-area {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+        }
+        
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .result-table th, .result-table td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .result-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #424242;
+        }
+        
+        .result-table tr:hover {
+            background-color: #fafafa;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            padding: 16px;
+            background-color: #ffebee;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .success-message {
+            color: #2e7d32;
+            padding: 16px;
+            background-color: #e8f5e8;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .verification-result {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .verification-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .verification-error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        /* 底部状态栏 */
+        .status-bar {
+            grid-column: 1 / -1;
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+        
+        .progress-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .progress-text {
+            margin-right: 16px;
+            color: #616161;
+        }
+        
+        .progress-bar-container {
+            width: 300px;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .status-info {
+            color: #757575;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -256,6 +418,7 @@
     <div class="container">
         <!-- 左侧关卡列表 -->
         <div class="level-list">
+            <div class="level-header">SQL学习关卡</div>
             <div class="level-group">
                 <div class="level-group-title">基础篇</div>
                 <div class="level-item" data-level="1">第1关：简单查询</div>
@@ -283,12 +446,18 @@
         
         <!-- 右侧主内容区 -->
         <div class="main-content">
-            <!-- 关卡信息 -->
-            <div class="level-info">
-                <h2 class="level-title" id="level-title">欢迎使用SQL学习游戏</h2>
-                <div class="level-description" id="level-description">请从左侧选择一个关卡开始学习</div>
-                <div class="level-hint" id="level-hint" style="display: none;">提示：点击语法按钮可以快速插入SQL片段</div>
-                <div class="level-tables" id="level-tables"></div>
+            <!-- 问题描述区 -->
+            <div class="problem-section">
+                <h2 class="problem-title" id="level-title">欢迎使用SQL学习游戏</h2>
+                <div class="problem-description" id="level-description">请从左侧选择一个关卡开始学习</div>
+                <div class="problem-constraints">
+                    <strong>任务目标：</strong><span id="level-target">选择一个关卡</span>
+                </div>
+                <div class="problem-hint" id="level-hint">提示：点击语法按钮可以快速插入SQL片段</div>
+                <div class="table-info">
+                    <div class="table-info-title">相关表结构</div>
+                    <div id="level-tables"></div>
+                </div>
             </div>
             
             <!-- 语法按钮区 -->
@@ -317,8 +486,11 @@
             </div>
             
             <!-- SQL编辑器 -->
-            <div class="sql-editor">
-                <textarea class="editor-textarea" id="sql-editor" placeholder="请输入SQL语句..."></textarea>
+            <div class="editor-section">
+                <div class="editor-header">SQL编辑器</div>
+                <div class="sql-editor">
+                    <textarea class="editor-textarea" id="sql-editor" placeholder="请输入SQL语句..."></textarea>
+                </div>
             </div>
             
             <!-- 操作按钮区 -->
@@ -329,17 +501,26 @@
             </div>
             
             <!-- 结果展示区 -->
-            <div class="result-area" id="result-area">
-                执行结果将显示在这里
+            <div class="result-section">
+                <div class="result-header">
+                    <span>执行结果</span>
+                    <span class="execution-time" id="execution-time">执行时间：0ms</span>
+                </div>
+                <div class="result-area" id="result-area">
+                    执行结果将显示在这里
+                </div>
             </div>
         </div>
         
-        <!-- 底部进度条 -->
-        <div class="progress-bar">
-            <div class="progress-text" id="progress-text">已完成 0/11 关</div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="progress-fill"></div>
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+            <div class="progress-info">
+                <div class="progress-text" id="progress-text">已完成 0/11 关</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
             </div>
+            <div class="status-info" id="status-info">选择关卡开始学习</div>
         </div>
     </div>
     
@@ -612,9 +793,21 @@
             
             currentLevel = level;
             
+            // 移除所有关卡的active状态
+            document.querySelectorAll('.level-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前关卡的active状态
+            const currentLevelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (currentLevelItem) {
+                currentLevelItem.classList.add('active');
+            }
+            
             // 更新关卡信息
             document.getElementById('level-title').textContent = level.title;
             document.getElementById('level-description').textContent = level.description;
+            document.getElementById('level-target').textContent = level.description;
             document.getElementById('level-hint').style.display = 'none';
             
             // 更新表结构信息
@@ -622,7 +815,9 @@
             
             // 清空编辑器和结果
             document.getElementById('sql-editor').value = '';
-            document.getElementById('result-area').textContent = '执行结果将显示在这里';
+            document.getElementById('result-area').innerHTML = '执行结果将显示在这里';
+            document.getElementById('execution-time').textContent = '执行时间：0ms';
+            document.getElementById('status-info').textContent = `当前关卡：${level.title}`;
         }
         
         // 更新表信息
@@ -700,19 +895,35 @@
                 return;
             }
             
+            const startTime = performance.now();
+            
             try {
                 // 模拟SQL执行
                 const result = executeMockSQL(sql);
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                // 更新执行时间
+                document.getElementById('execution-time').textContent = `执行时间：${executionTime}ms`;
+                
+                // 显示结果
                 showResult(result, 'success');
                 
                 // 验证答案
                 if (validateAnswer(sql)) {
-                    showResult('闯关成功！', 'success');
+                    // 显示验证成功
+                    const resultArea = document.getElementById('result-area');
+                    resultArea.innerHTML += `<div class="verification-result verification-success">✓ 答案正确！闯关成功！</div>`;
                     markLevelComplete(currentLevel.id);
                 } else {
-                    showResult('结果与预期不符，请检查SQL逻辑', 'error');
+                    // 显示验证失败
+                    const resultArea = document.getElementById('result-area');
+                    resultArea.innerHTML += `<div class="verification-result verification-error">✗ 结果与预期不符，请检查SQL逻辑</div>`;
                 }
             } catch (error) {
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                document.getElementById('execution-time').textContent = `执行时间：${executionTime}ms`;
                 showResult(`执行错误：${error.message}`, 'error');
             }
         }
