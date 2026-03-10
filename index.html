@@ -887,66 +887,182 @@
         
         // 模拟SQL执行
         function executeMockSQL(sql) {
-            // 简单的SQL解析和执行模拟
-            sql = sql.toUpperCase();
+            // 保留原始SQL用于显示，同时创建大写版本用于解析
+            const originalSql = sql;
+            const upperSql = sql.toUpperCase();
             
-            if (sql.includes('SELECT') && sql.includes('FROM')) {
+            if (upperSql.includes('SELECT') && upperSql.includes('FROM')) {
                 // 提取表名
-                const fromIndex = sql.indexOf('FROM');
-                let tableName = sql.substring(fromIndex + 4).trim().split(' ')[0].toLowerCase();
+                const fromIndex = upperSql.indexOf('FROM');
+                let tableName = upperSql.substring(fromIndex + 4).trim().split(' ')[0].toLowerCase();
                 
+                // 处理不同的表
+                let data = [];
                 if (tableName === 'student') {
-                    return formatTable(mockData.student);
+                    data = [...mockData.student];
                 } else if (tableName === 'class') {
-                    return formatTable(mockData.class);
+                    data = [...mockData.class];
                 } else if (tableName === 'course') {
-                    return formatTable(mockData.course);
+                    data = [...mockData.course];
                 } else if (tableName === 'score') {
-                    return formatTable(mockData.score);
-                } else if (sql.includes('JOIN')) {
-                    // 简单的JOIN模拟
-                    return formatTable([
-                        { name: "张三", class_name: "高一(1)班" },
-                        { name: "李四", class_name: "高一(1)班" },
-                        { name: "王五", class_name: "高一(2)班" },
-                        { name: "赵六", class_name: "高一(2)班" },
-                        { name: "钱七", class_name: "高一(3)班" }
-                    ]);
-                } else if (sql.includes('GROUP BY')) {
-                    // 简单的GROUP BY模拟
-                    return formatTable([
-                        { class_id: 1, count: 4 },
-                        { class_id: 2, count: 3 },
-                        { class_id: 3, count: 3 }
-                    ]);
-                } else if (sql.includes('AVG(')) {
-                    // 简单的聚合函数模拟
-                    return formatTable([{ avg: 18 }]);
-                } else if (sql.includes('WHERE')) {
-                    // 简单的WHERE条件模拟
-                    return formatTable(mockData.student.filter(s => s.age > 18));
-                } else if (sql.includes('ORDER BY')) {
-                    // 简单的ORDER BY模拟
-                    return formatTable([...mockData.student].sort((a, b) => b.age - a.age));
-                } else if (sql.includes('LIMIT')) {
-                    // 简单的LIMIT模拟
-                    return formatTable(mockData.student.slice(0, 5));
-                } else if (sql.includes('DISTINCT')) {
-                    // 简单的DISTINCT模拟
-                    const classIds = [...new Set(mockData.student.map(s => s.class_id))];
-                    return formatTable(classIds.map(id => ({ class_id: id })));
-                } else if (sql.includes('SUBQUERY') || sql.includes('SELECT.*FROM.*WHERE')) {
-                    // 简单的子查询模拟
-                    return formatTable([{ student_id: 1 }, { student_id: 2 }, { student_id: 4 }]);
-                } else if (sql.includes('RANK()')) {
-                    // 简单的窗口函数模拟
-                    return formatTable([
-                        { student_id: 1, score: 95, rank: 1 },
-                        { student_id: 4, score: 95, rank: 1 },
-                        { student_id: 1, score: 90, rank: 3 },
-                        { student_id: 3, score: 90, rank: 3 },
-                        { student_id: 2, score: 88, rank: 5 }
-                    ]);
+                    data = [...mockData.score];
+                }
+                
+                // 处理JOIN
+                if (upperSql.includes('JOIN')) {
+                    // 简单的JOIN处理
+                    if (upperSql.includes('JOIN CLASS')) {
+                        const result = [];
+                        mockData.student.forEach(student => {
+                            const classInfo = mockData.class.find(c => c.id === student.class_id);
+                            if (classInfo) {
+                                result.push({
+                                    name: student.name,
+                                    class_name: classInfo.class_name
+                                });
+                            }
+                        });
+                        return formatTable(result);
+                    }
+                }
+                
+                // 处理WHERE条件
+                if (upperSql.includes('WHERE')) {
+                    const whereClause = upperSql.substring(upperSql.indexOf('WHERE') + 5).trim();
+                    if (whereClause.includes('AGE > 18')) {
+                        data = data.filter(item => item.age > 18);
+                    } else if (whereClause.includes('AGE < 18')) {
+                        data = data.filter(item => item.age < 18);
+                    } else if (whereClause.includes('AGE = 18')) {
+                        data = data.filter(item => item.age === 18);
+                    }
+                }
+                
+                // 处理ORDER BY
+                if (upperSql.includes('ORDER BY')) {
+                    const orderByClause = upperSql.substring(upperSql.indexOf('ORDER BY') + 8).trim();
+                    if (orderByClause.includes('AGE DESC')) {
+                        data.sort((a, b) => b.age - a.age);
+                    } else if (orderByClause.includes('AGE ASC')) {
+                        data.sort((a, b) => a.age - b.age);
+                    }
+                }
+                
+                // 处理LIMIT
+                if (upperSql.includes('LIMIT')) {
+                    const limitMatch = upperSql.match(/LIMIT\s+(\d+)/);
+                    if (limitMatch) {
+                        const limit = parseInt(limitMatch[1]);
+                        data = data.slice(0, limit);
+                    }
+                }
+                
+                // 处理DISTINCT
+                if (upperSql.includes('DISTINCT')) {
+                    if (upperSql.includes('DISTINCT CLASS_ID')) {
+                        const classIds = [...new Set(mockData.student.map(s => s.class_id))];
+                        return formatTable(classIds.map(id => ({ class_id: id })));
+                    }
+                }
+                
+                // 处理聚合函数
+                if (upperSql.includes('COUNT(')) {
+                    if (upperSql.includes('COUNT(*)')) {
+                        return formatTable([{ count: data.length }]);
+                    }
+                } else if (upperSql.includes('AVG(')) {
+                    if (upperSql.includes('AVG(AGE)')) {
+                        const avgAge = data.reduce((sum, item) => sum + item.age, 0) / data.length;
+                        return formatTable([{ avg: avgAge.toFixed(2) }]);
+                    }
+                } else if (upperSql.includes('SUM(')) {
+                    if (upperSql.includes('SUM(SCORE)')) {
+                        const sumScore = data.reduce((sum, item) => sum + item.score, 0);
+                        return formatTable([{ sum: sumScore }]);
+                    }
+                } else if (upperSql.includes('MAX(')) {
+                    if (upperSql.includes('MAX(AGE)')) {
+                        const maxAge = Math.max(...data.map(item => item.age));
+                        return formatTable([{ max: maxAge }]);
+                    } else if (upperSql.includes('MAX(SCORE)')) {
+                        const maxScore = Math.max(...data.map(item => item.score));
+                        return formatTable([{ max: maxScore }]);
+                    }
+                } else if (upperSql.includes('MIN(')) {
+                    if (upperSql.includes('MIN(AGE)')) {
+                        const minAge = Math.min(...data.map(item => item.age));
+                        return formatTable([{ min: minAge }]);
+                    } else if (upperSql.includes('MIN(SCORE)')) {
+                        const minScore = Math.min(...data.map(item => item.score));
+                        return formatTable([{ min: minScore }]);
+                    }
+                }
+                
+                // 处理GROUP BY
+                if (upperSql.includes('GROUP BY')) {
+                    if (upperSql.includes('GROUP BY CLASS_ID')) {
+                        const grouped = {};
+                        mockData.student.forEach(student => {
+                            if (!grouped[student.class_id]) {
+                                grouped[student.class_id] = 0;
+                            }
+                            grouped[student.class_id]++;
+                        });
+                        const result = Object.entries(grouped).map(([class_id, count]) => ({
+                            class_id: parseInt(class_id),
+                            count
+                        }));
+                        return formatTable(result);
+                    }
+                }
+                
+                // 处理子查询
+                if (upperSql.includes('SELECT.*FROM.*WHERE') || upperSql.includes('WHERE.*SELECT')) {
+                    if (upperSql.includes('SCORE > (SELECT AVG(SCORE) FROM SCORE)')) {
+                        const avgScore = mockData.score.reduce((sum, item) => sum + item.score, 0) / mockData.score.length;
+                        const result = mockData.score
+                            .filter(item => item.score > avgScore)
+                            .map(item => ({ student_id: item.student_id }));
+                        return formatTable(result);
+                    }
+                }
+                
+                // 处理窗口函数
+                if (upperSql.includes('RANK()')) {
+                    const ranked = [...mockData.score]
+                        .sort((a, b) => b.score - a.score)
+                        .map((item, index, array) => {
+                            let rank = index + 1;
+                            if (index > 0 && item.score === array[index - 1].score) {
+                                rank = array[index - 1].rank;
+                            }
+                            return {
+                                student_id: item.student_id,
+                                score: item.score,
+                                rank
+                            };
+                        });
+                    return formatTable(ranked);
+                }
+                
+                // 处理SELECT * 或指定字段
+                if (upperSql.includes('SELECT *')) {
+                    return formatTable(data);
+                } else {
+                    // 简单处理指定字段
+                    const selectClause = upperSql.substring(upperSql.indexOf('SELECT') + 6, upperSql.indexOf('FROM')).trim();
+                    const fields = selectClause.split(',').map(field => field.trim().toLowerCase());
+                    
+                    const result = data.map(item => {
+                        const newItem = {};
+                        fields.forEach(field => {
+                            if (item[field]) {
+                                newItem[field] = item[field];
+                            }
+                        });
+                        return newItem;
+                    });
+                    return formatTable(result);
                 }
             }
             
