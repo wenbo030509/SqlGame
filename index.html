@@ -1012,14 +1012,51 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 document.getElementById('level-target').textContent = level.description;
                 document.getElementById('level-hint').style.display = 'none';
                 
-                // 隐藏表结构信息
-                document.getElementById('level-tables').innerHTML = '';
+                // 显示表结构信息
+                document.getElementById('level-tables').innerHTML = `
+                    <div class="table-info">
+                        <div class="table-info-title">表结构</div>
+                        <div class="table-structure">
+                            <div class="table-name">student (学生表)</div>
+                            <div class="table-fields">
+                                <div class="field-item">id: INTEGER (主键)</div>
+                                <div class="field-item">name: TEXT (姓名)</div>
+                                <div class="field-item">age: INTEGER (年龄)</div>
+                                <div class="field-item">class_id: INTEGER (班级ID)</div>
+                            </div>
+                        </div>
+                        <div class="table-structure">
+                            <div class="table-name">class (班级表)</div>
+                            <div class="table-fields">
+                                <div class="field-item">id: INTEGER (主键)</div>
+                                <div class="field-item">class_name: TEXT (班级名称)</div>
+                                <div class="field-item">teacher: TEXT (班主任)</div>
+                            </div>
+                        </div>
+                        <div class="table-structure">
+                            <div class="table-name">course (课程表)</div>
+                            <div class="table-fields">
+                                <div class="field-item">id: INTEGER (主键)</div>
+                                <div class="field-item">course_name: TEXT (课程名称)</div>
+                                <div class="field-item">credit: INTEGER (学分)</div>
+                            </div>
+                        </div>
+                        <div class="table-structure">
+                            <div class="table-name">score (成绩表)</div>
+                            <div class="table-fields">
+                                <div class="field-item">student_id: INTEGER (学生ID)</div>
+                                <div class="field-item">course_id: INTEGER (课程ID)</div>
+                                <div class="field-item">score: INTEGER (成绩)</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
-                // 显示语法学习内容
+                // 显示语法学习内容和执行结果区域
                 document.getElementById('result-area').innerHTML = `
                     <div style="padding: 20px;">
                         <h3>SQL语法学习</h3>
-                        <p style="margin-bottom: 20px;">欢迎来到SQL学习序章！在这里你可以学习SQL的基础语法和常用函数。</p>
+                        <p style="margin-bottom: 20px;">欢迎来到SQL学习序章！在这里你可以学习SQL的基础语法和常用函数，并通过执行SQL来体验不同语法的效果。</p>
                         
                         <h4>基础语法</h4>
                         <ul style="margin-left: 20px; margin-bottom: 20px;">
@@ -1043,11 +1080,26 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                         </ul>
                         
                         <h4>操作提示</h4>
-                        <ul style="margin-left: 20px;">
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
                             <li>将鼠标悬停在下方的语法按钮上，查看详细用法</li>
                             <li>点击语法按钮可以快速插入SQL片段到编辑器</li>
-                            <li>选择关卡开始实战练习</li>
+                            <li>在编辑器中输入SQL语句，点击"执行SQL"按钮查看结果</li>
+                            <li>可以尝试不同的SQL语法，体验执行效果</li>
                         </ul>
+                        
+                        <h4>示例SQL</h4>
+                        <div style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+                            <p>1. 查询所有学生信息：</p>
+                            <code>SELECT * FROM student;</code>
+                            <p>2. 查询学生姓名和年龄：</p>
+                            <code>SELECT name, age FROM student;</code>
+                            <p>3. 查询年龄大于18的学生：</p>
+                            <code>SELECT * FROM student WHERE age > 18;</code>
+                            <p>4. 按年龄排序：</p>
+                            <code>SELECT * FROM student ORDER BY age DESC;</code>
+                            <p>5. 统计每个班级的学生人数：</p>
+                            <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id;</code>
+                        </div>
                     </div>
                 `;
                 
@@ -1135,11 +1187,6 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
         
         // 执行SQL
         function executeSQL() {
-            if (!currentLevel) {
-                showResult('请先选择一个关卡', 'error');
-                return;
-            }
-            
             const sql = document.getElementById('sql-editor').value.trim();
             if (!sql) {
                 showResult('请输入SQL语句', 'error');
@@ -1160,16 +1207,18 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 // 显示结果
                 showResult(result, 'success');
                 
-                // 验证答案
-                if (validateAnswer(sql)) {
-                    // 显示验证成功
-                    const resultArea = document.getElementById('result-area');
-                    resultArea.innerHTML += `<div class="verification-result verification-success">✓ 答案正确！闯关成功！</div>`;
-                    markLevelComplete(currentLevel.id);
-                } else {
-                    // 显示验证失败
-                    const resultArea = document.getElementById('result-area');
-                    resultArea.innerHTML += `<div class="verification-result verification-error">✗ 结果与预期不符，请检查SQL逻辑</div>`;
+                // 验证答案（仅在非序章关卡）
+                if (currentLevel && currentLevel.id !== 0) {
+                    if (validateAnswer(sql)) {
+                        // 显示验证成功
+                        const resultArea = document.getElementById('result-area');
+                        resultArea.innerHTML += `<div class="verification-result verification-success">✓ 答案正确！闯关成功！</div>`;
+                        markLevelComplete(currentLevel.id);
+                    } else {
+                        // 显示验证失败
+                        const resultArea = document.getElementById('result-area');
+                        resultArea.innerHTML += `<div class="verification-result verification-error">✗ 结果与预期不符，请检查SQL逻辑</div>`;
+                    }
                 }
             } catch (error) {
                 const endTime = performance.now();
