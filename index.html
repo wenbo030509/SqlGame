@@ -380,6 +380,10 @@
         <div class="level-list">
             <div class="level-header">SQL学习关卡</div>
             <div class="level-group">
+                <div class="level-group-title">序章</div>
+                <div class="level-item" data-level="0">序章：SQL语法学习</div>
+            </div>
+            <div class="level-group">
                 <div class="level-group-title">基础篇</div>
                 <div class="level-item" data-level="1">第1关：简单查询</div>
                 <div class="level-item" data-level="2">第2关：指定字段查询</div>
@@ -431,28 +435,51 @@
             
             <!-- 语法按钮区 -->
             <div class="syntax-buttons">
-                <button class="syntax-btn" data-syntax="SELECT">SELECT</button>
-                <button class="syntax-btn" data-syntax="FROM">FROM</button>
-                <button class="syntax-btn" data-syntax="WHERE">WHERE</button>
-                <button class="syntax-btn" data-syntax="ORDER BY">ORDER BY</button>
-                <button class="syntax-btn" data-syntax="GROUP BY">GROUP BY</button>
-                <button class="syntax-btn" data-syntax="JOIN">JOIN</button>
-                <button class="syntax-btn" data-syntax="COUNT()">COUNT()</button>
-                <button class="syntax-btn" data-syntax="SUM()">SUM()</button>
-                <button class="syntax-btn" data-syntax="AVG()">AVG()</button>
-                <button class="syntax-btn" data-syntax="MAX()">MAX()</button>
-                <button class="syntax-btn" data-syntax="MIN()">MIN()</button>
-                <button class="syntax-btn" data-syntax="DISTINCT">DISTINCT</button>
-                <button class="syntax-btn" data-syntax="LIMIT">LIMIT</button>
-                <button class="syntax-btn" data-syntax="AS">AS</button>
-                <button class="syntax-btn" data-syntax="=">= (等于)</button>
-                <button class="syntax-btn" data-syntax=">">> (大于)</button>
-                <button class="syntax-btn" data-syntax="<">< (小于)</button>
-                <button class="syntax-btn" data-syntax="LIKE">LIKE</button>
-                <button class="syntax-btn" data-syntax="IN">IN</button>
-                <button class="syntax-btn" data-syntax="AND">AND</button>
-                <button class="syntax-btn" data-syntax="OR">OR</button>
+                <button class="syntax-btn" data-syntax="SELECT" data-example="SELECT * FROM table_name;
+SELECT column1, column2 FROM table_name;">SELECT</button>
+                <button class="syntax-btn" data-syntax="FROM" data-example="SELECT * FROM table_name;">FROM</button>
+                <button class="syntax-btn" data-syntax="WHERE" data-example="SELECT * FROM table_name WHERE condition;
+SELECT * FROM student WHERE age > 18;">WHERE</button>
+                <button class="syntax-btn" data-syntax="ORDER BY" data-example="SELECT * FROM table_name ORDER BY column ASC/DESC;
+SELECT * FROM student ORDER BY age DESC;">ORDER BY</button>
+                <button class="syntax-btn" data-syntax="GROUP BY" data-example="SELECT column, COUNT(*) FROM table_name GROUP BY column;
+SELECT class_id, COUNT(*) FROM student GROUP BY class_id;">GROUP BY</button>
+                <button class="syntax-btn" data-syntax="JOIN" data-example="SELECT * FROM table1 JOIN table2 ON table1.id = table2.id;
+SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id;">JOIN</button>
+                <button class="syntax-btn" data-syntax="COUNT()" data-example="SELECT COUNT(*) FROM table_name;
+SELECT COUNT(DISTINCT column) FROM table_name;">COUNT()</button>
+                <button class="syntax-btn" data-syntax="SUM()" data-example="SELECT SUM(column) FROM table_name;
+SELECT SUM(score) FROM score;">SUM()</button>
+                <button class="syntax-btn" data-syntax="AVG()" data-example="SELECT AVG(column) FROM table_name;
+SELECT AVG(age) FROM student;">AVG()</button>
+                <button class="syntax-btn" data-syntax="MAX()" data-example="SELECT MAX(column) FROM table_name;
+SELECT MAX(score) FROM score;">MAX()</button>
+                <button class="syntax-btn" data-syntax="MIN()" data-example="SELECT MIN(column) FROM table_name;
+SELECT MIN(age) FROM student;">MIN()</button>
+                <button class="syntax-btn" data-syntax="DISTINCT" data-example="SELECT DISTINCT column FROM table_name;
+SELECT DISTINCT class_id FROM student;">DISTINCT</button>
+                <button class="syntax-btn" data-syntax="LIMIT" data-example="SELECT * FROM table_name LIMIT 5;
+SELECT * FROM student LIMIT 10;">LIMIT</button>
+                <button class="syntax-btn" data-syntax="AS" data-example="SELECT column AS alias FROM table_name;
+SELECT name AS 姓名 FROM student;">AS</button>
+                <button class="syntax-btn" data-syntax="=" data-example="SELECT * FROM table_name WHERE column = value;
+SELECT * FROM student WHERE age = 18;">= (等于)</button>
+                <button class="syntax-btn" data-syntax=">") data-example="SELECT * FROM table_name WHERE column > value;
+SELECT * FROM student WHERE age > 18;">&gt; (大于)</button>
+                <button class="syntax-btn" data-syntax="<" data-example="SELECT * FROM table_name WHERE column < value;
+SELECT * FROM student WHERE age < 18;">&lt; (小于)</button>
+                <button class="syntax-btn" data-syntax="LIKE" data-example="SELECT * FROM table_name WHERE column LIKE pattern;
+SELECT * FROM student WHERE name LIKE '%张%';">LIKE</button>
+                <button class="syntax-btn" data-syntax="IN" data-example="SELECT * FROM table_name WHERE column IN (value1, value2, ...);
+SELECT * FROM student WHERE class_id IN (1, 2);">IN</button>
+                <button class="syntax-btn" data-syntax="AND" data-example="SELECT * FROM table_name WHERE condition1 AND condition2;
+SELECT * FROM student WHERE age > 18 AND class_id = 1;">AND</button>
+                <button class="syntax-btn" data-syntax="OR" data-example="SELECT * FROM table_name WHERE condition1 OR condition2;
+SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
             </div>
+            
+            <!-- 语法提示框 -->
+            <div id="syntax-tooltip" style="position: absolute; background-color: #333; color: white; padding: 10px; border-radius: 4px; font-size: 12px; z-index: 1000; display: none; white-space: pre-wrap;"></div>
             
             <!-- SQL编辑器 -->
             <div class="editor-section">
@@ -487,6 +514,15 @@
     <script>
         // 关卡数据
         const levels = [
+            {
+                id: 0,
+                title: "序章：SQL语法学习",
+                description: "学习SQL基础语法和常用函数",
+                hint: "点击下方的语法按钮查看详细用法",
+                tables: [],
+                expected: "学习SQL语法",
+                answer: ""
+            },
             {
                 id: 1,
                 title: "第1关：简单查询",
@@ -888,6 +924,34 @@
                     const syntax = btn.dataset.syntax;
                     insertSyntax(syntax);
                 });
+                
+                // 语法按钮hover事件
+                let hoverTimer;
+                btn.addEventListener('mouseenter', (e) => {
+                    const example = btn.dataset.example;
+                    if (example) {
+                        hoverTimer = setTimeout(() => {
+                            const tooltip = document.getElementById('syntax-tooltip');
+                            tooltip.textContent = example;
+                            tooltip.style.left = e.pageX + 10 + 'px';
+                            tooltip.style.top = e.pageY + 10 + 'px';
+                            tooltip.style.display = 'block';
+                        }, 1000);
+                    }
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    clearTimeout(hoverTimer);
+                    document.getElementById('syntax-tooltip').style.display = 'none';
+                });
+                
+                btn.addEventListener('mousemove', (e) => {
+                    const tooltip = document.getElementById('syntax-tooltip');
+                    if (tooltip.style.display === 'block') {
+                        tooltip.style.left = e.pageX + 10 + 'px';
+                        tooltip.style.top = e.pageY + 10 + 'px';
+                    }
+                });
             });
             
             // 执行SQL按钮
@@ -897,8 +961,24 @@
             document.getElementById('hint-btn').addEventListener('click', () => {
                 if (currentLevel) {
                     const hintElement = document.getElementById('level-hint');
-                    hintElement.textContent = `提示：${currentLevel.hint}`;
+                    hintElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>提示：${currentLevel.hint}</span>
+                            <button id="copy-answer-btn" style="padding: 4px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">复制答案</button>
+                        </div>
+                    `;
                     hintElement.style.display = 'block';
+                    
+                    // 复制答案按钮点击事件
+                    document.getElementById('copy-answer-btn').addEventListener('click', () => {
+                        navigator.clipboard.writeText(currentLevel.answer).then(() => {
+                            const copyBtn = document.getElementById('copy-answer-btn');
+                            copyBtn.textContent = '已复制！';
+                            setTimeout(() => {
+                                copyBtn.textContent = '复制答案';
+                            }, 2000);
+                        });
+                    });
                 }
             });
             
@@ -924,19 +1004,71 @@
                 currentLevelItem.classList.add('active');
             }
             
-            // 更新关卡信息
-            document.getElementById('level-title').textContent = level.title;
-            document.getElementById('level-description').textContent = level.description;
-            document.getElementById('level-target').textContent = level.description;
-            document.getElementById('level-hint').style.display = 'none';
-            
-            // 更新表结构信息
-            updateTableInfo(level.tables);
-            
-            // 清空编辑器和结果
-            document.getElementById('sql-editor').value = '';
-            document.getElementById('result-area').innerHTML = '执行结果将显示在这里';
-            document.getElementById('execution-time').textContent = '执行时间：0ms';
+            // 处理序章
+            if (levelId === 0) {
+                // 更新关卡信息
+                document.getElementById('level-title').textContent = level.title;
+                document.getElementById('level-description').textContent = level.description;
+                document.getElementById('level-target').textContent = level.description;
+                document.getElementById('level-hint').style.display = 'none';
+                
+                // 隐藏表结构信息
+                document.getElementById('level-tables').innerHTML = '';
+                
+                // 显示语法学习内容
+                document.getElementById('result-area').innerHTML = `
+                    <div style="padding: 20px;">
+                        <h3>SQL语法学习</h3>
+                        <p style="margin-bottom: 20px;">欢迎来到SQL学习序章！在这里你可以学习SQL的基础语法和常用函数。</p>
+                        
+                        <h4>基础语法</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>SELECT</strong> - 用于从表中选择数据</li>
+                            <li><strong>FROM</strong> - 指定要查询的表</li>
+                            <li><strong>WHERE</strong> - 过滤数据的条件</li>
+                            <li><strong>ORDER BY</strong> - 对结果进行排序</li>
+                            <li><strong>GROUP BY</strong> - 对数据进行分组</li>
+                            <li><strong>JOIN</strong> - 连接多个表</li>
+                            <li><strong>LIMIT</strong> - 限制结果数量</li>
+                        </ul>
+                        
+                        <h4>常用函数</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>COUNT()</strong> - 计算行数</li>
+                            <li><strong>SUM()</strong> - 计算总和</li>
+                            <li><strong>AVG()</strong> - 计算平均值</li>
+                            <li><strong>MAX()</strong> - 找出最大值</li>
+                            <li><strong>MIN()</strong> - 找出最小值</li>
+                            <li><strong>DISTINCT</strong> - 去重</li>
+                        </ul>
+                        
+                        <h4>操作提示</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>将鼠标悬停在下方的语法按钮上，查看详细用法</li>
+                            <li>点击语法按钮可以快速插入SQL片段到编辑器</li>
+                            <li>选择关卡开始实战练习</li>
+                        </ul>
+                    </div>
+                `;
+                
+                // 清空编辑器
+                document.getElementById('sql-editor').value = '';
+                document.getElementById('execution-time').textContent = '执行时间：0ms';
+            } else {
+                // 更新关卡信息
+                document.getElementById('level-title').textContent = level.title;
+                document.getElementById('level-description').textContent = level.description;
+                document.getElementById('level-target').textContent = level.description;
+                document.getElementById('level-hint').style.display = 'none';
+                
+                // 更新表结构信息
+                updateTableInfo(level.tables);
+                
+                // 清空编辑器和结果
+                document.getElementById('sql-editor').value = '';
+                document.getElementById('result-area').innerHTML = '执行结果将显示在这里';
+                document.getElementById('execution-time').textContent = '执行时间：0ms';
+            }
         }
         
         // 更新表信息
@@ -1135,20 +1267,62 @@
         function showTableStructure() {
             if (!currentLevel) return;
             
-            let structureHTML = '<h3>表结构</h3>';
+            let structureHTML = '<h3>表结构与数据</h3>';
             currentLevel.tables.forEach(tableName => {
                 const table = tables[tableName];
                 if (table) {
+                    // 显示表结构
                     structureHTML += `
-                        <div style="margin-bottom: 10px;">
+                        <div style="margin-bottom: 20px;">
                             <h4>${table.name}</h4>
-                            <ul>
-                                ${table.fields.map(field => 
-                                    `<li>${field.name} (${field.type}): ${field.description}</li>`
-                                ).join('')}
-                            </ul>
-                        </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong>字段结构：</strong>
+                                <ul style="margin-left: 20px;">
+                                    ${table.fields.map(field => 
+                                        `<li>${field.name} (${field.type}): ${field.description}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
                     `;
+                    
+                    // 显示表数据
+                    if (db) {
+                        try {
+                            const result = db.exec(`SELECT * FROM ${tableName}`);
+                            if (result.length > 0 && result[0].columns && result[0].values) {
+                                const columns = result[0].columns;
+                                const values = result[0].values;
+                                
+                                structureHTML += `
+                                    <div>
+                                        <strong>表数据：</strong>
+                                        <table class="result-table" style="margin-top: 5px;">
+                                            <thead>
+                                                <tr>
+                                                    ${columns.map(col => `<th>${col}</th>`).join('')}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${values.map(row => `
+                                                    <tr>
+                                                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                `;
+                            } else {
+                                structureHTML += '<div style="margin-top: 5px;"><em>该表暂无数据</em></div>';
+                            }
+                        } catch (error) {
+                            structureHTML += `<div style="margin-top: 5px; color: #d32f2f;">无法获取表数据: ${error.message}</div>`;
+                        }
+                    } else {
+                        structureHTML += '<div style="margin-top: 5px; color: #d32f2f;">数据库未初始化</div>';
+                    }
+                    
+                    structureHTML += '</div>';
                 }
             });
             
