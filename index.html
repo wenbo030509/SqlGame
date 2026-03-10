@@ -379,33 +379,8 @@
             padding: 0 24px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             font-size: 14px;
-        }
-        
-        .progress-info {
-            display: flex;
-            align-items: center;
-        }
-        
-        .progress-text {
-            margin-right: 16px;
-            color: #616161;
-        }
-        
-        .progress-bar-container {
-            width: 300px;
-            height: 8px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .progress-bar-fill {
-            height: 100%;
-            background-color: #4CAF50;
-            width: 0%;
-            transition: width 0.3s ease;
         }
         
         .status-info {
@@ -514,12 +489,6 @@
         
         <!-- 底部状态栏 -->
         <div class="status-bar">
-            <div class="progress-info">
-                <div class="progress-text" id="progress-text">已完成 0/11 关</div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" id="progress-fill"></div>
-                </div>
-            </div>
             <div class="status-info" id="status-info">选择关卡开始学习</div>
         </div>
     </div>
@@ -716,8 +685,6 @@
         function init() {
             // 加载本地存储的进度
             loadProgress();
-            // 更新进度条
-            updateProgress();
             // 绑定事件
             bindEvents();
         }
@@ -740,16 +707,6 @@
         // 保存进度
         function saveProgress() {
             localStorage.setItem('completedLevels', JSON.stringify([...completedLevels]));
-        }
-        
-        // 更新进度条
-        function updateProgress() {
-            const total = levels.length;
-            const completed = completedLevels.size;
-            const percentage = (completed / total) * 100;
-            
-            document.getElementById('progress-text').textContent = `已完成 ${completed}/${total} 关`;
-            document.getElementById('progress-fill').style.width = `${percentage}%`;
         }
         
         // 绑定事件
@@ -1039,7 +996,6 @@
         function markLevelComplete(levelId) {
             completedLevels.add(levelId);
             saveProgress();
-            updateProgress();
             
             const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
             if (levelItem) {
