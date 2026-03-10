@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL学习游戏客户端</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 1fr 100px;
+            height: 100vh;
+        }
+        
+        /* 左侧关卡列表 */
+        .level-list {
+            background-color: #fff;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .level-group {
+            margin-bottom: 20px;
+        }
+        
+        .level-group-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+        
+        .level-item {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .level-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .level-item.completed {
+            background-color: #e8f5e8;
+            color: #4CAF50;
+        }
+        
+        /* 右侧主内容区 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .level-info {
+            margin-bottom: 20px;
+        }
+        
+        .level-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .level-description {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .level-hint {
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .level-tables {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        /* 语法按钮区 */
+        .syntax-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        .syntax-btn {
+            padding: 6px 12px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .syntax-btn:hover {
+            background-color: #e8f5e8;
+        }
+        
+        /* SQL编辑器 */
+        .sql-editor {
+            flex: 1;
+            margin-bottom: 15px;
+        }
+        
+        .editor-textarea {
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: none;
+        }
+        
+        /* 操作按钮区 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .execute-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .hint-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .table-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        /* 结果展示区 */
+        .result-area {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            overflow: auto;
+        }
+        
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .result-table th {
+            background-color: #f2f2f2;
+        }
+        
+        .error-message {
+            color: #f44336;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+        }
+        
+        .success-message {
+            color: #4CAF50;
+            padding: 10px;
+            background-color: #e8f5e8;
+            border-radius: 4px;
+        }
+        
+        /* 底部进度条 */
+        .progress-bar {
+            grid-column: 1 / -1;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .progress-text {
+            margin-right: 20px;
+        }
+        
+        .progress-bar-container {
+            flex: 1;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* 表结构展示 */
+        .table-structure {
+            margin-top: 10px;
+        }
+        
+        .table-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .table-fields {
+            margin-left: 20px;
+        }
+        
+        .field-item {
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧关卡列表 -->
+        <div class="level-list">
+            <div class="level-group">
+                <div class="level-group-title">基础篇</div>
+                <div class="level-item" data-level="1">第1关：简单查询</div>
+                <div class="level-item" data-level="2">第2关：指定字段查询</div>
+                <div class="level-item" data-level="3">第3关：去重查询</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">进阶篇</div>
+                <div class="level-item" data-level="4">第4关：WHERE条件查询</div>
+                <div class="level-item" data-level="5">第5关：ORDER BY排序</div>
+                <div class="level-item" data-level="6">第6关：LIMIT限制</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">高级篇</div>
+                <div class="level-item" data-level="7">第7关：GROUP BY分组</div>
+                <div class="level-item" data-level="8">第8关：聚合函数</div>
+                <div class="level-item" data-level="9">第9关：JOIN连接</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">挑战篇</div>
+                <div class="level-item" data-level="10">第10关：子查询</div>
+                <div class="level-item" data-level="11">第11关：窗口函数</div>
+            </div>
+        </div>
+        
+        <!-- 右侧主内容区 -->
+        <div class="main-content">
+            <!-- 关卡信息 -->
+            <div class="level-info">
+                <h2 class="level-title" id="level-title">欢迎使用SQL学习游戏</h2>
+                <div class="level-description" id="level-description">请从左侧选择一个关卡开始学习</div>
+                <div class="level-hint" id="level-hint" style="display: none;">提示：点击语法按钮可以快速插入SQL片段</div>
+                <div class="level-tables" id="level-tables"></div>
+            </div>
+            
+            <!-- 语法按钮区 -->
+            <div class="syntax-buttons">
+                <button class="syntax-btn" data-syntax="SELECT">SELECT</button>
+                <button class="syntax-btn" data-syntax="FROM">FROM</button>
+                <button class="syntax-btn" data-syntax="WHERE">WHERE</button>
+                <button class="syntax-btn" data-syntax="ORDER BY">ORDER BY</button>
+                <button class="syntax-btn" data-syntax="GROUP BY">GROUP BY</button>
+                <button class="syntax-btn" data-syntax="JOIN">JOIN</button>
+                <button class="syntax-btn" data-syntax="COUNT()">COUNT()</button>
+                <button class="syntax-btn" data-syntax="SUM()">SUM()</button>
+                <button class="syntax-btn" data-syntax="AVG()">AVG()</button>
+                <button class="syntax-btn" data-syntax="MAX()">MAX()</button>
+                <button class="syntax-btn" data-syntax="MIN()">MIN()</button>
+                <button class="syntax-btn" data-syntax="DISTINCT">DISTINCT</button>
+                <button class="syntax-btn" data-syntax="LIMIT">LIMIT</button>
+                <button class="syntax-btn" data-syntax="AS">AS</button>
+                <button class="syntax-btn" data-syntax="=">= (等于)</button>
+                <button class="syntax-btn" data-syntax=">">> (大于)</button>
+                <button class="syntax-btn" data-syntax="<">< (小于)</button>
+                <button class="syntax-btn" data-syntax="LIKE">LIKE</button>
+                <button class="syntax-btn" data-syntax="IN">IN</button>
+                <button class="syntax-btn" data-syntax="AND">AND</button>
+                <button class="syntax-btn" data-syntax="OR">OR</button>
+            </div>
+            
+            <!-- SQL编辑器 -->
+            <div class="sql-editor">
+                <textarea class="editor-textarea" id="sql-editor" placeholder="请输入SQL语句..."></textarea>
+            </div>
+            
+            <!-- 操作按钮区 -->
+            <div class="action-buttons">
+                <button class="action-btn execute-btn" id="execute-btn">执行SQL</button>
+                <button class="action-btn hint-btn" id="hint-btn">查看提示</button>
+                <button class="action-btn table-btn" id="table-btn">查看表结构</button>
+            </div>
+            
+            <!-- 结果展示区 -->
+            <div class="result-area" id="result-area">
+                执行结果将显示在这里
+            </div>
+        </div>
+        
+        <!-- 底部进度条 -->
+        <div class="progress-bar">
+            <div class="progress-text" id="progress-text">已完成 0/11 关</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 关卡数据
+        const levels = [
+            {
+                id: 1,
+                title: "第1关：简单查询",
+                description: "查询学生表中所有学生的信息",
+                hint: "使用 SELECT * FROM student",
+                tables: ["student"],
+                expected: "所有学生信息",
+                answer: "SELECT * FROM student"
+            },
+            {
+                id: 2,
+                title: "第2关：指定字段查询",
+                description: "查询学生表中所有学生的姓名和年龄",
+                hint: "使用 SELECT name, age FROM student",
+                tables: ["student"],
+                expected: "学生姓名和年龄",
+                answer: "SELECT name, age FROM student"
+            },
+            {
+                id: 3,
+                title: "第3关：去重查询",
+                description: "查询学生表中所有不同的班级ID",
+                hint: "使用 SELECT DISTINCT class_id FROM student",
+                tables: ["student"],
+                expected: "不同的班级ID",
+                answer: "SELECT DISTINCT class_id FROM student"
+            },
+            {
+                id: 4,
+                title: "第4关：WHERE条件查询",
+                description: "查询年龄大于18的学生信息",
+                hint: "使用 SELECT * FROM student WHERE age > 18",
+                tables: ["student"],
+                expected: "年龄大于18的学生",
+                answer: "SELECT * FROM student WHERE age > 18"
+            },
+            {
+                id: 5,
+                title: "第5关：ORDER BY排序",
+                description: "查询学生表，按年龄降序排列",
+                hint: "使用 SELECT * FROM student ORDER BY age DESC",
+                tables: ["student"],
+                expected: "按年龄降序的学生信息",
+                answer: "SELECT * FROM student ORDER BY age DESC"
+            },
+            {
+                id: 6,
+                title: "第6关：LIMIT限制",
+                description: "查询学生表中前5名学生的信息",
+                hint: "使用 SELECT * FROM student LIMIT 5",
+                tables: ["student"],
+                expected: "前5名学生信息",
+                answer: "SELECT * FROM student LIMIT 5"
+            },
+            {
+                id: 7,
+                title: "第7关：GROUP BY分组",
+                description: "按班级ID分组，统计每个班级的学生人数",
+                hint: "使用 SELECT class_id, COUNT(*) FROM student GROUP BY class_id",
+                tables: ["student"],
+                expected: "每个班级的学生人数",
+                answer: "SELECT class_id, COUNT(*) FROM student GROUP BY class_id"
+            },
+            {
+                id: 8,
+                title: "第8关：聚合函数",
+                description: "计算学生表中所有学生的平均年龄",
+                hint: "使用 SELECT AVG(age) FROM student",
+                tables: ["student"],
+                expected: "平均年龄",
+                answer: "SELECT AVG(age) FROM student"
+            },
+            {
+                id: 9,
+                title: "第9关：JOIN连接",
+                description: "查询学生姓名及其所在班级名称",
+                hint: "使用 SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id",
+                tables: ["student", "class"],
+                expected: "学生姓名和班级名称",
+                answer: "SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id"
+            },
+            {
+                id: 10,
+                title: "第10关：子查询",
+                description: "查询成绩大于平均分的学生ID",
+                hint: "使用 SELECT student_id FROM score WHERE score > (SELECT AVG(score) FROM score)",
+                tables: ["score"],
+                expected: "成绩大于平均分的学生ID",
+                answer: "SELECT student_id FROM score WHERE score > (SELECT AVG(score) FROM score)"
+            },
+            {
+                id: 11,
+                title: "第11关：窗口函数",
+                description: "查询每个学生的成绩排名",
+                hint: "使用 SELECT student_id, score, RANK() OVER (ORDER BY score DESC) FROM score",
+                tables: ["score"],
+                expected: "学生成绩排名",
+                answer: "SELECT student_id, score, RANK() OVER (ORDER BY score DESC) FROM score"
+            }
+        ];
+        
+        // 表结构数据
+        const tables = {
+            student: {
+                name: "student（学生表）",
+                fields: [
+                    { name: "id", type: "INT", description: "学生ID（主键）" },
+                    { name: "name", type: "VARCHAR(50)", description: "学生姓名" },
+                    { name: "age", type: "INT", description: "年龄" },
+                    { name: "class_id", type: "INT", description: "班级ID" }
+                ]
+            },
+            class: {
+                name: "class（班级表）",
+                fields: [
+                    { name: "id", type: "INT", description: "班级ID（主键）" },
+                    { name: "class_name", type: "VARCHAR(50)", description: "班级名称" },
+                    { name: "teacher", type: "VARCHAR(50)", description: "班主任姓名" }
+                ]
+            },
+            course: {
+                name: "course（课程表）",
+                fields: [
+                    { name: "id", type: "INT", description: "课程ID（主键）" },
+                    { name: "course_name", type: "VARCHAR(50)", description: "课程名称" },
+                    { name: "credit", type: "INT", description: "学分" }
+                ]
+            },
+            score: {
+                name: "score（成绩表）",
+                fields: [
+                    { name: "student_id", type: "INT", description: "学生ID（外键）" },
+                    { name: "course_id", type: "INT", description: "课程ID（外键）" },
+                    { name: "score", type: "INT", description: "成绩（0-100）" }
+                ]
+            }
+        };
+        
+        // 模拟数据
+        const mockData = {
+            student: [
+                { id: 1, name: "张三", age: 18, class_id: 1 },
+                { id: 2, name: "李四", age: 19, class_id: 1 },
+                { id: 3, name: "王五", age: 17, class_id: 2 },
+                { id: 4, name: "赵六", age: 18, class_id: 2 },
+                { id: 5, name: "钱七", age: 19, class_id: 3 },
+                { id: 6, name: "孙八", age: 17, class_id: 3 },
+                { id: 7, name: "周九", age: 18, class_id: 1 },
+                { id: 8, name: "吴十", age: 19, class_id: 2 },
+                { id: 9, name: "郑一", age: 17, class_id: 3 },
+                { id: 10, name: "王二", age: 18, class_id: 1 }
+            ],
+            class: [
+                { id: 1, class_name: "高一(1)班", teacher: "张老师" },
+                { id: 2, class_name: "高一(2)班", teacher: "李老师" },
+                { id: 3, class_name: "高一(3)班", teacher: "王老师" }
+            ],
+            course: [
+                { id: 1, course_name: "数学", credit: 5 },
+                { id: 2, course_name: "英语", credit: 4 },
+                { id: 3, course_name: "物理", credit: 4 },
+                { id: 4, course_name: "化学", credit: 3 },
+                { id: 5, course_name: "生物", credit: 3 }
+            ],
+            score: [
+                { student_id: 1, course_id: 1, score: 90 },
+                { student_id: 1, course_id: 2, score: 85 },
+                { student_id: 1, course_id: 3, score: 95 },
+                { student_id: 2, course_id: 1, score: 88 },
+                { student_id: 2, course_id: 2, score: 92 },
+                { student_id: 2, course_id: 3, score: 80 },
+                { student_id: 3, course_id: 1, score: 75 },
+                { student_id: 3, course_id: 2, score: 85 },
+                { student_id: 3, course_id: 3, score: 90 },
+                { student_id: 4, course_id: 1, score: 92 },
+                { student_id: 4, course_id: 2, score: 88 },
+                { student_id: 4, course_id: 3, score: 95 }
+            ]
+        };
+        
+        // 当前关卡
+        let currentLevel = null;
+        // 已完成关卡
+        let completedLevels = new Set();
+        
+        // 初始化
+        function init() {
+            // 加载本地存储的进度
+            loadProgress();
+            // 更新进度条
+            updateProgress();
+            // 绑定事件
+            bindEvents();
+        }
+        
+        // 加载进度
+        function loadProgress() {
+            const stored = localStorage.getItem('completedLevels');
+            if (stored) {
+                completedLevels = new Set(JSON.parse(stored));
+                // 更新关卡状态
+                completedLevels.forEach(levelId => {
+                    const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+                    if (levelItem) {
+                        levelItem.classList.add('completed');
+                    }
+                });
+            }
+        }
+        
+        // 保存进度
+        function saveProgress() {
+            localStorage.setItem('completedLevels', JSON.stringify([...completedLevels]));
+        }
+        
+        // 更新进度条
+        function updateProgress() {
+            const total = levels.length;
+            const completed = completedLevels.size;
+            const percentage = (completed / total) * 100;
+            
+            document.getElementById('progress-text').textContent = `已完成 ${completed}/${total} 关`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 关卡点击事件
+            document.querySelectorAll('.level-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const levelId = parseInt(item.dataset.level);
+                    loadLevel(levelId);
+                });
+            });
+            
+            // 语法按钮点击事件
+            document.querySelectorAll('.syntax-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const syntax = btn.dataset.syntax;
+                    insertSyntax(syntax);
+                });
+            });
+            
+            // 执行SQL按钮
+            document.getElementById('execute-btn').addEventListener('click', executeSQL);
+            
+            // 查看提示按钮
+            document.getElementById('hint-btn').addEventListener('click', () => {
+                if (currentLevel) {
+                    const hintElement = document.getElementById('level-hint');
+                    hintElement.textContent = `提示：${currentLevel.hint}`;
+                    hintElement.style.display = 'block';
+                }
+            });
+            
+            // 查看表结构按钮
+            document.getElementById('table-btn').addEventListener('click', showTableStructure);
+        }
+        
+        // 加载关卡
+        function loadLevel(levelId) {
+            const level = levels.find(l => l.id === levelId);
+            if (!level) return;
+            
+            currentLevel = level;
+            
+            // 更新关卡信息
+            document.getElementById('level-title').textContent = level.title;
+            document.getElementById('level-description').textContent = level.description;
+            document.getElementById('level-hint').style.display = 'none';
+            
+            // 更新表结构信息
+            updateTableInfo(level.tables);
+            
+            // 清空编辑器和结果
+            document.getElementById('sql-editor').value = '';
+            document.getElementById('result-area').textContent = '执行结果将显示在这里';
+        }
+        
+        // 更新表信息
+        function updateTableInfo(tableNames) {
+            const tablesElement = document.getElementById('level-tables');
+            tablesElement.innerHTML = '';
+            
+            tableNames.forEach(tableName => {
+                const table = tables[tableName];
+                if (table) {
+                    const tableDiv = document.createElement('div');
+                    tableDiv.className = 'table-structure';
+                    tableDiv.innerHTML = `
+                        <div class="table-name">${table.name}</div>
+                        <div class="table-fields">
+                            ${table.fields.map(field => 
+                                `<div class="field-item">${field.name} (${field.type}): ${field.description}</div>`
+                            ).join('')}
+                        </div>
+                    `;
+                    tablesElement.appendChild(tableDiv);
+                }
+            });
+        }
+        
+        // 插入语法
+        function insertSyntax(syntax) {
+            const editor = document.getElementById('sql-editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            
+            let insertText = syntax;
+            // 特殊处理
+            if (syntax === 'SELECT') {
+                insertText = 'SELECT ';
+            } else if (syntax === 'FROM') {
+                insertText = ' FROM ';
+            } else if (syntax === 'WHERE') {
+                insertText = ' WHERE ';
+            } else if (syntax === 'ORDER BY') {
+                insertText = ' ORDER BY ';
+            } else if (syntax === 'GROUP BY') {
+                insertText = ' GROUP BY ';
+            } else if (syntax === 'JOIN') {
+                insertText = ' JOIN ';
+            } else if (syntax === 'LIMIT') {
+                insertText = ' LIMIT ';
+            } else if (syntax === 'AS') {
+                insertText = ' AS ';
+            } else if (syntax === '= (等于)') {
+                insertText = ' = ';
+            } else if (syntax === '> (大于)') {
+                insertText = ' > ';
+            } else if (syntax === '< (小于)') {
+                insertText = ' < ';
+            }
+            
+            editor.value = text.substring(0, start) + insertText + text.substring(end);
+            editor.focus();
+            editor.selectionStart = start + insertText.length;
+            editor.selectionEnd = start + insertText.length;
+        }
+        
+        // 执行SQL
+        function executeSQL() {
+            if (!currentLevel) {
+                showResult('请先选择一个关卡', 'error');
+                return;
+            }
+            
+            const sql = document.getElementById('sql-editor').value.trim();
+            if (!sql) {
+                showResult('请输入SQL语句', 'error');
+                return;
+            }
+            
+            try {
+                // 模拟SQL执行
+                const result = executeMockSQL(sql);
+                showResult(result, 'success');
+                
+                // 验证答案
+                if (validateAnswer(sql)) {
+                    showResult('闯关成功！', 'success');
+                    markLevelComplete(currentLevel.id);
+                } else {
+                    showResult('结果与预期不符，请检查SQL逻辑', 'error');
+                }
+            } catch (error) {
+                showResult(`执行错误：${error.message}`, 'error');
+            }
+        }
+        
+        // 模拟SQL执行
+        function executeMockSQL(sql) {
+            // 简单的SQL解析和执行模拟
+            sql = sql.toUpperCase();
+            
+            if (sql.includes('SELECT') && sql.includes('FROM')) {
+                // 提取表名
+                const fromIndex = sql.indexOf('FROM');
+                let tableName = sql.substring(fromIndex + 4).trim().split(' ')[0].toLowerCase();
+                
+                if (tableName === 'student') {
+                    return formatTable(mockData.student);
+                } else if (tableName === 'class') {
+                    return formatTable(mockData.class);
+                } else if (tableName === 'course') {
+                    return formatTable(mockData.course);
+                } else if (tableName === 'score') {
+                    return formatTable(mockData.score);
+                } else if (sql.includes('JOIN')) {
+                    // 简单的JOIN模拟
+                    return formatTable([
+                        { name: "张三", class_name: "高一(1)班" },
+                        { name: "李四", class_name: "高一(1)班" },
+                        { name: "王五", class_name: "高一(2)班" },
+                        { name: "赵六", class_name: "高一(2)班" },
+                        { name: "钱七", class_name: "高一(3)班" }
+                    ]);
+                } else if (sql.includes('GROUP BY')) {
+                    // 简单的GROUP BY模拟
+                    return formatTable([
+                        { class_id: 1, count: 4 },
+                        { class_id: 2, count: 3 },
+                        { class_id: 3, count: 3 }
+                    ]);
+                } else if (sql.includes('AVG(')) {
+                    // 简单的聚合函数模拟
+                    return formatTable([{ avg: 18 }]);
+                } else if (sql.includes('WHERE')) {
+                    // 简单的WHERE条件模拟
+                    return formatTable(mockData.student.filter(s => s.age > 18));
+                } else if (sql.includes('ORDER BY')) {
+                    // 简单的ORDER BY模拟
+                    return formatTable([...mockData.student].sort((a, b) => b.age - a.age));
+                } else if (sql.includes('LIMIT')) {
+                    // 简单的LIMIT模拟
+                    return formatTable(mockData.student.slice(0, 5));
+                } else if (sql.includes('DISTINCT')) {
+                    // 简单的DISTINCT模拟
+                    const classIds = [...new Set(mockData.student.map(s => s.class_id))];
+                    return formatTable(classIds.map(id => ({ class_id: id })));
+                } else if (sql.includes('SUBQUERY') || sql.includes('SELECT.*FROM.*WHERE')) {
+                    // 简单的子查询模拟
+                    return formatTable([{ student_id: 1 }, { student_id: 2 }, { student_id: 4 }]);
+                } else if (sql.includes('RANK()')) {
+                    // 简单的窗口函数模拟
+                    return formatTable([
+                        { student_id: 1, score: 95, rank: 1 },
+                        { student_id: 4, score: 95, rank: 1 },
+                        { student_id: 1, score: 90, rank: 3 },
+                        { student_id: 3, score: 90, rank: 3 },
+                        { student_id: 2, score: 88, rank: 5 }
+                    ]);
+                }
+            }
+            
+            throw new Error('SQL语句解析失败');
+        }
+        
+        // 格式化表格
+        function formatTable(data) {
+            if (!data || data.length === 0) {
+                return '<div>无结果</div>';
+            }
+            
+            const keys = Object.keys(data[0]);
+            let table = '<table class="result-table"><thead><tr>';
+            
+            // 表头
+            keys.forEach(key => {
+                table += `<th>${key}</th>`;
+            });
+            table += '</tr></thead><tbody>';
+            
+            // 数据行
+            data.forEach(row => {
+                table += '<tr>';
+                keys.forEach(key => {
+                    table += `<td>${row[key]}</td>`;
+                });
+                table += '</tr>';
+            });
+            
+            table += '</tbody></table>';
+            return table;
+        }
+        
+        // 验证答案
+        function validateAnswer(sql) {
+            if (!currentLevel) return false;
+            
+            // 简单的答案验证，实际项目中可能需要更复杂的逻辑
+            const normalizedSQL = sql.trim().toUpperCase().replace(/\s+/g, ' ');
+            const normalizedAnswer = currentLevel.answer.trim().toUpperCase().replace(/\s+/g, ' ');
+            
+            return normalizedSQL === normalizedAnswer;
+        }
+        
+        // 标记关卡完成
+        function markLevelComplete(levelId) {
+            completedLevels.add(levelId);
+            saveProgress();
+            updateProgress();
+            
+            const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (levelItem) {
+                levelItem.classList.add('completed');
+            }
+        }
+        
+        // 显示表结构
+        function showTableStructure() {
+            if (!currentLevel) return;
+            
+            let structureHTML = '<h3>表结构</h3>';
+            currentLevel.tables.forEach(tableName => {
+                const table = tables[tableName];
+                if (table) {
+                    structureHTML += `
+                        <div style="margin-bottom: 10px;">
+                            <h4>${table.name}</h4>
+                            <ul>
+                                ${table.fields.map(field => 
+                                    `<li>${field.name} (${field.type}): ${field.description}</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            });
+            
+            showResult(structureHTML, 'success');
+        }
+        
+        // 显示结果
+        function showResult(content, type) {
+            const resultArea = document.getElementById('result-area');
+            if (type === 'error') {
+                resultArea.innerHTML = `<div class="error-message">${content}</div>`;
+            } else {
+                resultArea.innerHTML = content;
+            }
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
