@@ -130,7 +130,7 @@
             font-size: 20px;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
@@ -1119,13 +1119,18 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
             const levelList = document.getElementById('level-list');
             const mainContent = document.querySelector('.main-content');
             
-            // 初始状态：在移动端默认收起侧边栏
+            // 初始状态：在移动端默认收起侧边栏，桌面端默认显示
             if (window.innerWidth <= 768) {
                 levelList.classList.add('collapsed');
                 mainContent.classList.add('expanded');
+                sidebarToggle.textContent = '☰';
+            } else {
+                levelList.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+                sidebarToggle.textContent = '☰';
             }
             
-            // 切换按钮点击事件
+            // 切换按钮点击事件（所有设备通用）
             sidebarToggle.addEventListener('click', () => {
                 levelList.classList.toggle('collapsed');
                 mainContent.classList.toggle('expanded');
@@ -1141,12 +1146,14 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
             // 窗口大小变化时的处理
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 768) {
-                    // 桌面端：始终显示侧边栏
-                    levelList.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                    sidebarToggle.textContent = '☰';
+                    // 桌面端：默认显示侧边栏
+                    if (levelList.classList.contains('collapsed')) {
+                        levelList.classList.remove('collapsed');
+                        mainContent.classList.remove('expanded');
+                        sidebarToggle.textContent = '☰';
+                    }
                 } else {
-                    // 移动端：保持收起状态
+                    // 移动端：默认收起侧边栏
                     if (!levelList.classList.contains('collapsed')) {
                         levelList.classList.add('collapsed');
                         mainContent.classList.add('expanded');
@@ -1155,9 +1162,9 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 }
             });
             
-            // 移动端点击主内容区时收起侧边栏
+            // 点击主内容区时收起侧边栏（所有设备通用）
             mainContent.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768 && !levelList.classList.contains('collapsed')) {
+                if (!levelList.classList.contains('collapsed')) {
                     // 确保点击的不是语法按钮或其他交互元素
                     if (!e.target.closest('.syntax-btn') && !e.target.closest('.action-btn')) {
                         levelList.classList.add('collapsed');
