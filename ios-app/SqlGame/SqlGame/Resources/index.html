@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL学习游戏客户端</title>
+    <script src="sql-wasm.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: 100vh;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: flex;
+            }
+            
+            .container {
+                grid-template-columns: 280px 1fr;
+                grid-template-rows: 1fr;
+                height: 100vh;
+            }
+            
+            .level-list {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 999;
+                border-right: 1px solid #e0e0e0;
+                border-bottom: none;
+                max-height: none;
+            }
+            
+            .level-list.collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                grid-column: 2 / -1;
+                padding: 16px;
+                padding-top: 60px; /* 为切换按钮留出空间 */
+            }
+            
+            .main-content.expanded {
+                grid-column: 1 / -1;
+            }
+            
+            .level-item {
+                font-size: 16px;
+                padding: 12px 16px;
+            }
+            
+            .syntax-buttons {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            
+            .syntax-btn {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .action-buttons {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .action-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+        
+        /* 小屏幕手机适配 */
+        @media (max-width: 480px) {
+            .level-list {
+                padding: 12px;
+            }
+            
+            .level-header {
+                font-size: 16px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            .level-title {
+                font-size: 18px;
+            }
+            
+            .syntax-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-btn {
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+        }
+        
+        /* 侧边栏切换按钮 */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-toggle:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+        
+        /* 左侧关卡列表 */
+        .level-list {
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        /* 侧边栏收起状态 */
+        .level-list.collapsed {
+            transform: translateX(-100%);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 999;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        /* 主内容区扩展状态 */
+        .main-content.expanded {
+            grid-column: 1 / -1;
+        }
+        
+        .level-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+        
+        .level-group {
+            margin-bottom: 24px;
+        }
+        
+        .level-group-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #4CAF50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .level-item {
+            padding: 10px 16px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            border: 1px solid transparent;
+        }
+        
+        .level-item:hover {
+            background-color: #f5f5f5;
+            border-color: #e0e0e0;
+        }
+        
+        .level-item.completed {
+            background-color: #e8f5e8;
+            color: #4CAF50;
+            border-color: #c8e6c9;
+        }
+        
+        .level-item.active {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1976d2;
+        }
+        
+        .level-item.bookmarked {
+            background-color: #fff9c4;
+            border-color: #ffeb3b;
+            color: #f57f17;
+        }
+        
+        .level-item.bookmarked::after {
+            content: '★';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f57f17;
+            font-size: 16px;
+        }
+        
+        /* 触摸反馈样式 */
+        .level-item.touch-active,
+        .syntax-btn.touch-active,
+        .action-btn.touch-active {
+            transform: scale(0.95);
+            opacity: 0.8;
+            transition: all 0.1s ease;
+        }
+        
+        .level-item {
+            position: relative;
+        }
+        
+        /* 右侧主内容区 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            background-color: #fafafa;
+        }
+        
+        /* 问题描述区 */
+        .problem-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .problem-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        
+        .problem-description {
+            margin-bottom: 16px;
+            line-height: 1.6;
+            color: #424242;
+        }
+        
+        .problem-constraints {
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .problem-hint {
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #e3f2fd;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1976d2;
+            display: none;
+        }
+        
+        /* 表结构区 */
+        .table-info {
+            margin-bottom: 16px;
+        }
+        
+        .table-info-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .table-structure {
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .table-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #616161;
+        }
+        
+        .table-fields {
+            margin-left: 20px;
+        }
+        
+        .field-item {
+            margin-bottom: 3px;
+            color: #757575;
+        }
+        
+        /* 语法按钮区 */
+        .syntax-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .syntax-btn {
+            padding: 6px 14px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .syntax-btn:hover {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1976d2;
+        }
+        
+        /* SQL编辑器 */
+        .editor-section {
+            flex: 1;
+            margin-bottom: 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+            font-size: 14px;
+            background-color: #fafafa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        .sql-editor {
+            flex: 1;
+            padding: 16px;
+        }
+        
+        .editor-textarea {
+            width: 100%;
+            height: 100%;
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            resize: none;
+            line-height: 1.5;
+        }
+        
+        .editor-textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+        
+        /* 操作按钮区 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .execute-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .execute-btn:hover {
+            background-color: #388E3C;
+        }
+        
+        .hint-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .hint-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .table-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .table-btn:hover {
+            background-color: #F57C00;
+        }
+        
+        /* 结果展示区 */
+        .result-section {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+            font-size: 14px;
+            background-color: #fafafa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .execution-time {
+            font-size: 12px;
+            color: #757575;
+        }
+        
+        .result-area {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+        }
+        
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .result-table th, .result-table td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .result-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #424242;
+        }
+        
+        .result-table tr:hover {
+            background-color: #fafafa;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            padding: 16px;
+            background-color: #ffebee;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .success-message {
+            color: #2e7d32;
+            padding: 16px;
+            background-color: #e8f5e8;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .verification-result {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .verification-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .verification-error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏切换按钮 -->
+        <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+        <!-- 左侧关卡列表 -->
+        <div class="level-list" id="level-list">
+            <div class="level-header">SQL学习关卡</div>
+            <div class="level-group">
+                <div class="level-group-title">序章</div>
+                <div class="level-item" data-level="0">序章：SQL语法学习</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">基础篇</div>
+                <div class="level-item" data-level="1">第1关：简单查询</div>
+                <div class="level-item" data-level="2">第2关：指定字段查询</div>
+                <div class="level-item" data-level="3">第3关：去重查询</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">进阶篇</div>
+                <div class="level-item" data-level="4">第4关：WHERE条件查询</div>
+                <div class="level-item" data-level="5">第5关：ORDER BY排序</div>
+                <div class="level-item" data-level="6">第6关：LIMIT限制</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">高级篇</div>
+                <div class="level-item" data-level="7">第7关：GROUP BY分组</div>
+                <div class="level-item" data-level="8">第8关：聚合函数</div>
+                <div class="level-item" data-level="9">第9关：JOIN连接</div>
+            </div>
+            <div class="level-group">
+                <div class="level-group-title">挑战篇</div>
+                <div class="level-item" data-level="10">第10关：子查询</div>
+                <div class="level-item" data-level="11">第11关：窗口函数</div>
+                <div class="level-item" data-level="12">第12关：LIKE模糊查询</div>
+                <div class="level-item" data-level="13">第13关：IN条件查询</div>
+                <div class="level-item" data-level="14">第14关：多条件查询</div>
+                <div class="level-item" data-level="15">第15关：别名使用</div>
+                <div class="level-item" data-level="16">第16关：多表JOIN</div>
+                <div class="level-item" data-level="17">第17关：HAVING过滤</div>
+                <div class="level-item" data-level="18">第18关：CASE语句</div>
+                <div class="level-item" data-level="19">第19关：日期函数</div>
+                <div class="level-item" data-level="20">第20关：综合挑战</div>
+            </div>
+        </div>
+        
+        <!-- 右侧主内容区 -->
+        <div class="main-content">
+            <!-- 问题描述区 -->
+            <div class="problem-section">
+                <h2 class="problem-title" id="level-title">欢迎使用SQL学习游戏</h2>
+                <div class="problem-description" id="level-description">请从左侧选择一个关卡开始学习</div>
+                <div class="problem-constraints">
+                    <strong>任务目标：</strong><span id="level-target">选择一个关卡</span>
+                </div>
+                <div class="problem-hint" id="level-hint">提示：点击语法按钮可以快速插入SQL片段</div>
+                <div class="table-info">
+                    <div class="table-info-title">相关表结构</div>
+                    <div id="level-tables"></div>
+                </div>
+            </div>
+            
+            <!-- 语法按钮区 -->
+            <div class="syntax-buttons">
+                <button class="syntax-btn" data-syntax="SELECT *" data-example="SELECT * FROM table_name;
+SELECT * FROM student;">SELECT *</button>
+                <button class="syntax-btn" data-syntax="SELECT" data-example="SELECT * FROM table_name;
+SELECT column1, column2 FROM table_name;">SELECT</button>
+                <button class="syntax-btn" data-syntax="FROM" data-example="SELECT * FROM table_name;">FROM</button>
+                <button class="syntax-btn" data-syntax="WHERE" data-example="SELECT * FROM table_name WHERE condition;
+SELECT * FROM student WHERE age > 18;">WHERE</button>
+                <button class="syntax-btn" data-syntax="ORDER BY" data-example="SELECT * FROM table_name ORDER BY column ASC/DESC;
+SELECT * FROM student ORDER BY age DESC;">ORDER BY</button>
+                <button class="syntax-btn" data-syntax="GROUP BY" data-example="SELECT column, COUNT(*) FROM table_name GROUP BY column;
+SELECT class_id, COUNT(*) FROM student GROUP BY class_id;">GROUP BY</button>
+                <button class="syntax-btn" data-syntax="HAVING" data-example="SELECT column, COUNT(*) FROM table_name GROUP BY column HAVING condition;
+SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 2;">HAVING</button>
+                <button class="syntax-btn" data-syntax="JOIN" data-example="SELECT * FROM table1 JOIN table2 ON table1.id = table2.id;
+SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id;">JOIN</button>
+                <button class="syntax-btn" data-syntax="CASE" data-example="SELECT column, CASE WHEN condition THEN result1 ELSE result2 END FROM table_name;
+SELECT name, CASE WHEN age >= 18 THEN '成年' ELSE '未成年' END AS age_group FROM student;">CASE</button>
+                <button class="syntax-btn" data-syntax="COUNT()" data-example="SELECT COUNT(*) FROM table_name;
+SELECT COUNT(DISTINCT column) FROM table_name;">COUNT()</button>
+                <button class="syntax-btn" data-syntax="SUM()" data-example="SELECT SUM(column) FROM table_name;
+SELECT SUM(score) FROM score;">SUM()</button>
+                <button class="syntax-btn" data-syntax="AVG()" data-example="SELECT AVG(column) FROM table_name;
+SELECT AVG(age) FROM student;">AVG()</button>
+                <button class="syntax-btn" data-syntax="MAX()" data-example="SELECT MAX(column) FROM table_name;
+SELECT MAX(score) FROM score;">MAX()</button>
+                <button class="syntax-btn" data-syntax="MIN()" data-example="SELECT MIN(column) FROM table_name;
+SELECT MIN(age) FROM student;">MIN()</button>
+                <button class="syntax-btn" data-syntax="DISTINCT" data-example="SELECT DISTINCT column FROM table_name;
+SELECT DISTINCT class_id FROM student;">DISTINCT</button>
+                <button class="syntax-btn" data-syntax="LIMIT" data-example="SELECT * FROM table_name LIMIT 5;
+SELECT * FROM student LIMIT 10;">LIMIT</button>
+                <button class="syntax-btn" data-syntax="AS" data-example="SELECT column AS alias FROM table_name;
+SELECT name AS 姓名 FROM student;">AS</button>
+                <button class="syntax-btn" data-syntax="=" data-example="SELECT * FROM table_name WHERE column = value;
+SELECT * FROM student WHERE age = 18;">= (等于)</button>
+                <button class="syntax-btn" data-syntax=">") data-example="SELECT * FROM table_name WHERE column > value;
+SELECT * FROM student WHERE age > 18;">&gt; (大于)</button>
+                <button class="syntax-btn" data-syntax="<" data-example="SELECT * FROM table_name WHERE column < value;
+SELECT * FROM student WHERE age < 18;">&lt; (小于)</button>
+                <button class="syntax-btn" data-syntax="LIKE" data-example="SELECT * FROM table_name WHERE column LIKE pattern;
+SELECT * FROM student WHERE name LIKE '%张%';">LIKE</button>
+                <button class="syntax-btn" data-syntax="IN" data-example="SELECT * FROM table_name WHERE column IN (value1, value2, ...);
+SELECT * FROM student WHERE class_id IN (1, 2);">IN</button>
+                <button class="syntax-btn" data-syntax="AND" data-example="SELECT * FROM table_name WHERE condition1 AND condition2;
+SELECT * FROM student WHERE age > 18 AND class_id = 1;">AND</button>
+                <button class="syntax-btn" data-syntax="OR" data-example="SELECT * FROM table_name WHERE condition1 OR condition2;
+SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
+            </div>
+            
+            <!-- 语法提示框 -->
+            <div id="syntax-tooltip" style="position: absolute; background-color: #333; color: white; padding: 10px; border-radius: 4px; font-size: 12px; z-index: 1000; display: none; white-space: pre-wrap;"></div>
+            
+            <!-- SQL编辑器 -->
+            <div class="editor-section">
+                <div class="editor-header">SQL编辑器</div>
+                <div class="sql-editor">
+                    <textarea class="editor-textarea" id="sql-editor" placeholder="请输入SQL语句..."></textarea>
+                </div>
+            </div>
+            
+            <!-- 操作按钮区 -->
+            <div class="action-buttons">
+                <button class="action-btn execute-btn" id="execute-btn">执行SQL</button>
+                <button class="action-btn hint-btn" id="hint-btn">查看提示</button>
+                <button class="action-btn table-btn" id="table-btn">查看表结构</button>
+            </div>
+            
+            <!-- 结果展示区 -->
+            <div class="result-section">
+                <div class="result-header">
+                    <span>执行结果</span>
+                    <span class="execution-time" id="execution-time">执行时间：0ms</span>
+                </div>
+                <div class="result-area" id="result-area">
+                    执行结果将显示在这里
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+    
+    <script>
+        // 关卡数据
+        const levels = [
+            {
+                id: 0,
+                title: "序章：SQL语法学习",
+                description: "学习SQL基础语法和常用函数",
+                hint: "点击下方的语法按钮查看详细用法",
+                tables: ["student", "class", "course", "score"],
+                expected: "学习SQL语法",
+                answer: ""
+            },
+            {
+                id: 1,
+                title: "第1关：简单查询",
+                description: "查询学生表中所有学生的信息",
+                hint: "使用 SELECT * FROM student",
+                tables: ["student"],
+                expected: "所有学生信息",
+                answer: "SELECT * FROM student"
+            },
+            {
+                id: 2,
+                title: "第2关：指定字段查询",
+                description: "查询学生表中所有学生的姓名和年龄",
+                hint: "使用 SELECT name, age FROM student",
+                tables: ["student"],
+                expected: "学生姓名和年龄",
+                answer: "SELECT name, age FROM student"
+            },
+            {
+                id: 3,
+                title: "第3关：去重查询",
+                description: "查询学生表中所有不同的班级ID",
+                hint: "使用 SELECT DISTINCT class_id FROM student",
+                tables: ["student"],
+                expected: "不同的班级ID",
+                answer: "SELECT DISTINCT class_id FROM student"
+            },
+            {
+                id: 4,
+                title: "第4关：WHERE条件查询",
+                description: "查询年龄大于18的学生信息",
+                hint: "使用 SELECT * FROM student WHERE age > 18",
+                tables: ["student"],
+                expected: "年龄大于18的学生",
+                answer: "SELECT * FROM student WHERE age > 18"
+            },
+            {
+                id: 5,
+                title: "第5关：ORDER BY排序",
+                description: "查询学生表，按年龄降序排列",
+                hint: "使用 SELECT * FROM student ORDER BY age DESC",
+                tables: ["student"],
+                expected: "按年龄降序的学生信息",
+                answer: "SELECT * FROM student ORDER BY age DESC"
+            },
+            {
+                id: 6,
+                title: "第6关：LIMIT限制",
+                description: "查询学生表中前5名学生的信息",
+                hint: "使用 SELECT * FROM student LIMIT 5",
+                tables: ["student"],
+                expected: "前5名学生信息",
+                answer: "SELECT * FROM student LIMIT 5"
+            },
+            {
+                id: 7,
+                title: "第7关：GROUP BY分组",
+                description: "按班级ID分组，统计每个班级的学生人数",
+                hint: "使用 SELECT class_id, COUNT(*) FROM student GROUP BY class_id",
+                tables: ["student"],
+                expected: "每个班级的学生人数",
+                answer: "SELECT class_id, COUNT(*) FROM student GROUP BY class_id"
+            },
+            {
+                id: 8,
+                title: "第8关：聚合函数",
+                description: "计算学生表中所有学生的平均年龄",
+                hint: "使用 SELECT AVG(age) FROM student",
+                tables: ["student"],
+                expected: "平均年龄",
+                answer: "SELECT AVG(age) FROM student"
+            },
+            {
+                id: 9,
+                title: "第9关：JOIN连接",
+                description: "查询学生姓名及其所在班级名称",
+                hint: "使用 SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id",
+                tables: ["student", "class"],
+                expected: "学生姓名和班级名称",
+                answer: "SELECT student.name, class.class_name FROM student JOIN class ON student.class_id = class.id"
+            },
+            {
+                id: 10,
+                title: "第10关：子查询",
+                description: "查询成绩大于平均分的学生ID",
+                hint: "使用 SELECT student_id FROM score WHERE score > (SELECT AVG(score) FROM score)",
+                tables: ["score"],
+                expected: "成绩大于平均分的学生ID",
+                answer: "SELECT student_id FROM score WHERE score > (SELECT AVG(score) FROM score)"
+            },
+            {
+                id: 11,
+                title: "第11关：窗口函数",
+                description: "查询每个学生的成绩排名",
+                hint: "使用 SELECT student_id, score, RANK() OVER (ORDER BY score DESC) FROM score",
+                tables: ["score"],
+                expected: "学生成绩排名",
+                answer: "SELECT student_id, score, RANK() OVER (ORDER BY score DESC) FROM score"
+            },
+            {
+                id: 12,
+                title: "第12关：LIKE模糊查询",
+                description: "查询姓名中包含'张'的学生信息",
+                hint: "使用 SELECT * FROM student WHERE name LIKE '%张%'",
+                tables: ["student"],
+                expected: "姓名中包含'张'的学生",
+                answer: "SELECT * FROM student WHERE name LIKE '%张%'"
+            },
+            {
+                id: 13,
+                title: "第13关：IN条件查询",
+                description: "查询班级ID为1或2的学生信息",
+                hint: "使用 SELECT * FROM student WHERE class_id IN (1, 2)",
+                tables: ["student"],
+                expected: "班级ID为1或2的学生",
+                answer: "SELECT * FROM student WHERE class_id IN (1, 2)"
+            },
+            {
+                id: 14,
+                title: "第14关：多条件查询",
+                description: "查询年龄大于18且班级ID为1的学生信息",
+                hint: "使用 SELECT * FROM student WHERE age > 18 AND class_id = 1",
+                tables: ["student"],
+                expected: "年龄大于18且班级ID为1的学生",
+                answer: "SELECT * FROM student WHERE age > 18 AND class_id = 1"
+            },
+            {
+                id: 15,
+                title: "第15关：别名使用",
+                description: "查询学生姓名和年龄，使用别名显示",
+                hint: "使用 SELECT name AS 姓名, age AS 年龄 FROM student",
+                tables: ["student"],
+                expected: "带别名的学生信息",
+                answer: "SELECT name AS 姓名, age AS 年龄 FROM student"
+            },
+            {
+                id: 16,
+                title: "第16关：多表JOIN",
+                description: "查询学生姓名、课程名称和成绩",
+                hint: "使用 SELECT student.name, course.course_name, score.score FROM score JOIN student ON score.student_id = student.id JOIN course ON score.course_id = course.id",
+                tables: ["student", "course", "score"],
+                expected: "学生姓名、课程名称和成绩",
+                answer: "SELECT student.name, course.course_name, score.score FROM score JOIN student ON score.student_id = student.id JOIN course ON score.course_id = course.id"
+            },
+            {
+                id: 17,
+                title: "第17关：HAVING过滤",
+                description: "查询学生人数大于3的班级ID",
+                hint: "使用 SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 3",
+                tables: ["student"],
+                expected: "学生人数大于3的班级",
+                answer: "SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 3"
+            },
+            {
+                id: 18,
+                title: "第18关：CASE语句",
+                description: "查询学生姓名和成绩等级（90分以上为优秀，80-89为良好，70-79为中等，60-69为及格，60以下为不及格）",
+                hint: "使用 SELECT student.name, score.score, CASE WHEN score.score >= 90 THEN '优秀' WHEN score.score >= 80 THEN '良好' WHEN score.score >= 70 THEN '中等' WHEN score.score >= 60 THEN '及格' ELSE '不及格' END AS 等级 FROM score JOIN student ON score.student_id = student.id",
+                tables: ["student", "score"],
+                expected: "学生姓名和成绩等级",
+                answer: "SELECT student.name, score.score, CASE WHEN score.score >= 90 THEN '优秀' WHEN score.score >= 80 THEN '良好' WHEN score.score >= 70 THEN '中等' WHEN score.score >= 60 THEN '及格' ELSE '不及格' END AS 等级 FROM score JOIN student ON score.student_id = student.id"
+            },
+            {
+                id: 19,
+                title: "第19关：日期函数",
+                description: "查询学生信息，假设现在是2026年，计算学生的出生年份",
+                hint: "使用 SELECT name, age, 2026 - age AS 出生年份 FROM student",
+                tables: ["student"],
+                expected: "学生姓名、年龄和出生年份",
+                answer: "SELECT name, age, 2026 - age AS 出生年份 FROM student"
+            },
+            {
+                id: 20,
+                title: "第20关：综合挑战",
+                description: "查询每个班级的平均成绩，并按平均成绩降序排列",
+                hint: "使用 SELECT class.class_name, AVG(score.score) AS 平均成绩 FROM score JOIN student ON score.student_id = student.id JOIN class ON student.class_id = class.id GROUP BY class.class_name ORDER BY 平均成绩 DESC",
+                tables: ["student", "class", "score"],
+                expected: "每个班级的平均成绩",
+                answer: "SELECT class.class_name, AVG(score.score) AS 平均成绩 FROM score JOIN student ON score.student_id = student.id JOIN class ON student.class_id = class.id GROUP BY class.class_name ORDER BY 平均成绩 DESC"
+            }
+        ];
+        
+        // 表结构数据
+        const tables = {
+            student: {
+                name: "student（学生表）",
+                fields: [
+                    { name: "id", type: "INT", description: "学生ID（主键）" },
+                    { name: "name", type: "VARCHAR(50)", description: "学生姓名" },
+                    { name: "age", type: "INT", description: "年龄" },
+                    { name: "class_id", type: "INT", description: "班级ID" }
+                ]
+            },
+            class: {
+                name: "class（班级表）",
+                fields: [
+                    { name: "id", type: "INT", description: "班级ID（主键）" },
+                    { name: "class_name", type: "VARCHAR(50)", description: "班级名称" },
+                    { name: "teacher", type: "VARCHAR(50)", description: "班主任姓名" }
+                ]
+            },
+            course: {
+                name: "course（课程表）",
+                fields: [
+                    { name: "id", type: "INT", description: "课程ID（主键）" },
+                    { name: "course_name", type: "VARCHAR(50)", description: "课程名称" },
+                    { name: "credit", type: "INT", description: "学分" }
+                ]
+            },
+            score: {
+                name: "score（成绩表）",
+                fields: [
+                    { name: "student_id", type: "INT", description: "学生ID（外键）" },
+                    { name: "course_id", type: "INT", description: "课程ID（外键）" },
+                    { name: "score", type: "INT", description: "成绩（0-100）" }
+                ]
+            }
+        };
+        
+        // 模拟数据
+        const mockData = {
+            student: [
+                { id: 1, name: "张三", age: 18, class_id: 1 },
+                { id: 2, name: "李四", age: 19, class_id: 1 },
+                { id: 3, name: "王五", age: 17, class_id: 2 },
+                { id: 4, name: "赵六", age: 18, class_id: 2 },
+                { id: 5, name: "钱七", age: 19, class_id: 3 },
+                { id: 6, name: "孙八", age: 17, class_id: 3 },
+                { id: 7, name: "周九", age: 18, class_id: 1 },
+                { id: 8, name: "吴十", age: 19, class_id: 2 },
+                { id: 9, name: "郑一", age: 17, class_id: 3 },
+                { id: 10, name: "王二", age: 18, class_id: 1 }
+            ],
+            class: [
+                { id: 1, class_name: "高一(1)班", teacher: "张老师" },
+                { id: 2, class_name: "高一(2)班", teacher: "李老师" },
+                { id: 3, class_name: "高一(3)班", teacher: "王老师" }
+            ],
+            course: [
+                { id: 1, course_name: "数学", credit: 5 },
+                { id: 2, course_name: "英语", credit: 4 },
+                { id: 3, course_name: "物理", credit: 4 },
+                { id: 4, course_name: "化学", credit: 3 },
+                { id: 5, course_name: "生物", credit: 3 }
+            ],
+            score: [
+                { student_id: 1, course_id: 1, score: 90 },
+                { student_id: 1, course_id: 2, score: 85 },
+                { student_id: 1, course_id: 3, score: 95 },
+                { student_id: 2, course_id: 1, score: 88 },
+                { student_id: 2, course_id: 2, score: 92 },
+                { student_id: 2, course_id: 3, score: 80 },
+                { student_id: 3, course_id: 1, score: 75 },
+                { student_id: 3, course_id: 2, score: 85 },
+                { student_id: 3, course_id: 3, score: 90 },
+                { student_id: 4, course_id: 1, score: 92 },
+                { student_id: 4, course_id: 2, score: 88 },
+                { student_id: 4, course_id: 3, score: 95 }
+            ]
+        };
+        
+        // 当前关卡
+        let currentLevel = null;
+        // 已完成关卡
+        let completedLevels = new Set();
+        // 已标记关卡
+        let bookmarkedLevels = new Set();
+        // 数据库实例
+        let db = null;
+        
+        // 初始化数据库
+        async function initDatabase() {
+            try {
+                // 加载SQL.js
+                const SQL = await initSqlJs({
+                    locateFile: filename => filename
+                });
+                
+                // 创建内存数据库
+                db = new SQL.Database();
+                
+                // 创建表结构
+                db.exec(`
+                    CREATE TABLE student (
+                        id INTEGER PRIMARY KEY,
+                        name TEXT,
+                        age INTEGER,
+                        class_id INTEGER
+                    );
+                    
+                    CREATE TABLE class (
+                        id INTEGER PRIMARY KEY,
+                        class_name TEXT,
+                        teacher TEXT
+                    );
+                    
+                    CREATE TABLE course (
+                        id INTEGER PRIMARY KEY,
+                        course_name TEXT,
+                        credit INTEGER
+                    );
+                    
+                    CREATE TABLE score (
+                        student_id INTEGER,
+                        course_id INTEGER,
+                        score INTEGER,
+                        PRIMARY KEY (student_id, course_id)
+                    );
+                `);
+                
+                // 插入模拟数据
+                db.exec(`
+                    INSERT INTO student VALUES 
+                    (1, '张三', 18, 1),
+                    (2, '李四', 19, 1),
+                    (3, '王五', 17, 2),
+                    (4, '赵六', 18, 2),
+                    (5, '钱七', 19, 3),
+                    (6, '孙八', 17, 3),
+                    (7, '周九', 18, 1),
+                    (8, '吴十', 19, 2),
+                    (9, '郑一', 17, 3),
+                    (10, '王二', 18, 1);
+                    
+                    INSERT INTO class VALUES 
+                    (1, '高一(1)班', '张老师'),
+                    (2, '高一(2)班', '李老师'),
+                    (3, '高一(3)班', '王老师');
+                    
+                    INSERT INTO course VALUES 
+                    (1, '数学', 5),
+                    (2, '英语', 4),
+                    (3, '物理', 4),
+                    (4, '化学', 3),
+                    (5, '生物', 3);
+                    
+                    INSERT INTO score VALUES 
+                    (1, 1, 90),
+                    (1, 2, 85),
+                    (1, 3, 95),
+                    (2, 1, 88),
+                    (2, 2, 92),
+                    (2, 3, 80),
+                    (3, 1, 75),
+                    (3, 2, 85),
+                    (3, 3, 90),
+                    (4, 1, 92),
+                    (4, 2, 88),
+                    (4, 3, 95);
+                `);
+                
+                console.log('数据库初始化成功');
+            } catch (error) {
+                console.error('数据库初始化失败:', error);
+            }
+        }
+        
+        // 初始化
+        async function init() {
+            // 初始化数据库
+            await initDatabase();
+            // 加载本地存储的进度
+            loadProgress();
+            // 绑定事件
+            bindEvents();
+        }
+        
+        // 加载进度
+        function loadProgress() {
+            const stored = localStorage.getItem('completedLevels');
+            if (stored) {
+                completedLevels = new Set(JSON.parse(stored));
+                // 更新关卡状态
+                completedLevels.forEach(levelId => {
+                    const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+                    if (levelItem) {
+                        levelItem.classList.add('completed');
+                    }
+                });
+            }
+            
+            const bookmarked = localStorage.getItem('bookmarkedLevels');
+            if (bookmarked) {
+                bookmarkedLevels = new Set(JSON.parse(bookmarked));
+                // 更新标记状态
+                bookmarkedLevels.forEach(levelId => {
+                    const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+                    if (levelItem) {
+                        levelItem.classList.add('bookmarked');
+                    }
+                });
+            }
+        }
+        
+        // 保存进度
+        function saveProgress() {
+            localStorage.setItem('completedLevels', JSON.stringify([...completedLevels]));
+        }
+        
+        // 保存标签进度
+        function saveBookmarkProgress() {
+            localStorage.setItem('bookmarkedLevels', JSON.stringify([...bookmarkedLevels]));
+        }
+        
+        // 切换标签状态
+        function toggleBookmark(levelId) {
+            const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (levelItem) {
+                if (bookmarkedLevels.has(levelId)) {
+                    bookmarkedLevels.delete(levelId);
+                    levelItem.classList.remove('bookmarked');
+                } else {
+                    bookmarkedLevels.add(levelId);
+                    levelItem.classList.add('bookmarked');
+                }
+                saveBookmarkProgress();
+            }
+        }
+        
+        // 侧边栏展开/收起功能
+        function initSidebarToggle() {
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const levelList = document.getElementById('level-list');
+            const mainContent = document.querySelector('.main-content');
+            
+            // 初始状态：在移动端默认收起侧边栏，桌面端默认显示
+            if (window.innerWidth <= 768) {
+                levelList.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+                sidebarToggle.textContent = '☰';
+            } else {
+                levelList.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+                sidebarToggle.textContent = '☰';
+            }
+            
+            // 切换按钮点击事件（所有设备通用）
+            sidebarToggle.addEventListener('click', () => {
+                levelList.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                
+                // 更新按钮图标
+                if (levelList.classList.contains('collapsed')) {
+                    sidebarToggle.textContent = '☰';
+                } else {
+                    sidebarToggle.textContent = '✕';
+                }
+            });
+            
+            // 窗口大小变化时的处理
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    // 桌面端：默认显示侧边栏
+                    if (levelList.classList.contains('collapsed')) {
+                        levelList.classList.remove('collapsed');
+                        mainContent.classList.remove('expanded');
+                        sidebarToggle.textContent = '☰';
+                    }
+                } else {
+                    // 移动端：默认收起侧边栏
+                    if (!levelList.classList.contains('collapsed')) {
+                        levelList.classList.add('collapsed');
+                        mainContent.classList.add('expanded');
+                        sidebarToggle.textContent = '☰';
+                    }
+                }
+            });
+            
+            // 点击主内容区时收起侧边栏（所有设备通用）
+            mainContent.addEventListener('click', (e) => {
+                if (!levelList.classList.contains('collapsed')) {
+                    // 确保点击的不是语法按钮或其他交互元素
+                    if (!e.target.closest('.syntax-btn') && !e.target.closest('.action-btn')) {
+                        levelList.classList.add('collapsed');
+                        mainContent.classList.add('expanded');
+                        sidebarToggle.textContent = '☰';
+                    }
+                }
+            });
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 初始化侧边栏切换功能
+            initSidebarToggle();
+            
+            // 关卡点击事件
+            document.querySelectorAll('.level-item').forEach(item => {
+                // 点击事件（支持触摸和鼠标）
+                item.addEventListener('click', () => {
+                    const levelId = parseInt(item.dataset.level);
+                    loadLevel(levelId);
+                });
+                
+                // 触摸事件支持
+                item.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    item.classList.add('touch-active');
+                });
+                
+                item.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    item.classList.remove('touch-active');
+                    const levelId = parseInt(item.dataset.level);
+                    loadLevel(levelId);
+                });
+                
+                // 关卡右键点击事件（标记/取消标记）
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const levelId = parseInt(item.dataset.level);
+                    toggleBookmark(levelId);
+                });
+                
+                // 长按事件（移动端替代右键）
+                let longPressTimer;
+                item.addEventListener('touchstart', (e) => {
+                    longPressTimer = setTimeout(() => {
+                        const levelId = parseInt(item.dataset.level);
+                        toggleBookmark(levelId);
+                    }, 500);
+                });
+                
+                item.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                item.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
+            });
+            
+            // 语法按钮点击事件
+            document.querySelectorAll('.syntax-btn').forEach(btn => {
+                // 鼠标点击事件
+                btn.addEventListener('click', () => {
+                    const syntax = btn.dataset.syntax;
+                    insertSyntax(syntax);
+                });
+                
+                // 触摸事件支持
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    btn.classList.add('touch-active');
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('touch-active');
+                    const syntax = btn.dataset.syntax;
+                    insertSyntax(syntax);
+                });
+                
+                // 语法按钮hover事件（桌面端）
+                let hoverTimer;
+                btn.addEventListener('mouseenter', (e) => {
+                    const example = btn.dataset.example;
+                    if (example) {
+                        hoverTimer = setTimeout(() => {
+                            const tooltip = document.getElementById('syntax-tooltip');
+                            tooltip.textContent = example;
+                            tooltip.style.left = e.pageX + 10 + 'px';
+                            tooltip.style.top = e.pageY + 10 + 'px';
+                            tooltip.style.display = 'block';
+                        }, 1000);
+                    }
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    clearTimeout(hoverTimer);
+                    document.getElementById('syntax-tooltip').style.display = 'none';
+                });
+                
+                // 长按事件（移动端替代hover）
+                let longPressTimer;
+                btn.addEventListener('touchstart', (e) => {
+                    const example = btn.dataset.example;
+                    if (example) {
+                        longPressTimer = setTimeout(() => {
+                            const tooltip = document.getElementById('syntax-tooltip');
+                            tooltip.textContent = example;
+                            // 移动端居中显示
+                            tooltip.style.left = '50%';
+                            tooltip.style.top = '50%';
+                            tooltip.style.transform = 'translate(-50%, -50%)';
+                            tooltip.style.display = 'block';
+                            
+                            // 3秒后自动隐藏
+                            setTimeout(() => {
+                                tooltip.style.display = 'none';
+                            }, 3000);
+                        }, 800);
+                    }
+                });
+                
+                btn.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                btn.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                btn.addEventListener('mousemove', (e) => {
+                    const tooltip = document.getElementById('syntax-tooltip');
+                    if (tooltip.style.display === 'block') {
+                        tooltip.style.left = e.pageX + 10 + 'px';
+                        tooltip.style.top = e.pageY + 10 + 'px';
+                    }
+                });
+            });
+            
+            // 执行SQL按钮
+            document.getElementById('execute-btn').addEventListener('click', executeSQL);
+            
+            // 查看提示按钮
+            document.getElementById('hint-btn').addEventListener('click', () => {
+                if (currentLevel) {
+                    const hintElement = document.getElementById('level-hint');
+                    hintElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>提示：${currentLevel.hint}</span>
+                            <button id="copy-answer-btn" style="padding: 4px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">复制答案</button>
+                        </div>
+                    `;
+                    hintElement.style.display = 'block';
+                    
+                    // 复制答案按钮点击事件
+                    document.getElementById('copy-answer-btn').addEventListener('click', () => {
+                        navigator.clipboard.writeText(currentLevel.answer).then(() => {
+                            const copyBtn = document.getElementById('copy-answer-btn');
+                            copyBtn.textContent = '已复制！';
+                            setTimeout(() => {
+                                copyBtn.textContent = '复制答案';
+                            }, 2000);
+                        });
+                    });
+                }
+            });
+            
+            // 查看表结构按钮
+            document.getElementById('table-btn').addEventListener('click', showTableStructure);
+        }
+        
+        // 加载关卡
+        function loadLevel(levelId) {
+            const level = levels.find(l => l.id === levelId);
+            if (!level) return;
+            
+            currentLevel = level;
+            
+            // 移除所有关卡的active状态
+            document.querySelectorAll('.level-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前关卡的active状态
+            const currentLevelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (currentLevelItem) {
+                currentLevelItem.classList.add('active');
+            }
+            
+            // 处理序章
+            if (levelId === 0) {
+                // 更新关卡信息
+                document.getElementById('level-title').textContent = level.title;
+                document.getElementById('level-description').textContent = level.description;
+                document.getElementById('level-target').textContent = level.description;
+                document.getElementById('level-hint').style.display = 'none';
+                
+                // 显示表结构信息
+                document.getElementById('level-tables').innerHTML = `
+                    <div class="table-structure">
+                        <div class="table-name">student (学生表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">name: TEXT (姓名)</div>
+                            <div class="field-item">age: INTEGER (年龄)</div>
+                            <div class="field-item">class_id: INTEGER (班级ID)</div>
+                        </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">class (班级表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">class_name: TEXT (班级名称)</div>
+                            <div class="field-item">teacher: TEXT (班主任)</div>
+                        </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">course (课程表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">id: INTEGER (主键)</div>
+                            <div class="field-item">course_name: TEXT (课程名称)</div>
+                            <div class="field-item">credit: INTEGER (学分)</div>
+                        </div>
+                    </div>
+                    <div class="table-structure">
+                        <div class="table-name">score (成绩表)</div>
+                        <div class="table-fields">
+                            <div class="field-item">student_id: INTEGER (学生ID)</div>
+                            <div class="field-item">course_id: INTEGER (课程ID)</div>
+                            <div class="field-item">score: INTEGER (成绩)</div>
+                        </div>
+                    </div>
+                `;
+                
+                // 显示语法学习内容和执行结果区域
+                document.getElementById('result-area').innerHTML = `
+                    <div style="padding: 20px;">
+                        <h3>SQL语法学习</h3>
+                        <p style="margin-bottom: 20px;">欢迎来到SQL学习序章！在这里你可以学习SQL的基础语法和常用函数，并通过执行SQL来体验不同语法的效果。</p>
+                        
+                        <h4>基础语法</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>SELECT</strong> - 用于从表中选择数据，可以使用*选择所有字段或指定具体字段</li>
+                            <li><strong>FROM</strong> - 指定要查询的表名</li>
+                            <li><strong>WHERE</strong> - 过滤数据的条件，支持各种运算符（=, >, <, LIKE, IN等）</li>
+                            <li><strong>ORDER BY</strong> - 对结果进行排序，ASC表示升序，DESC表示降序</li>
+                            <li><strong>GROUP BY</strong> - 对数据进行分组，通常与聚合函数一起使用</li>
+                            <li><strong>HAVING</strong> - 对分组后的结果进行过滤，类似于WHERE但作用于分组</li>
+                            <li><strong>JOIN</strong> - 连接多个表，根据关联字段合并数据</li>
+                            <li><strong>LIMIT</strong> - 限制返回结果的行数</li>
+                        </ul>
+                        
+                        <h4>常用函数</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>COUNT()</strong> - 计算行数，COUNT(*)统计所有行，COUNT(字段)统计非空值</li>
+                            <li><strong>SUM()</strong> - 计算数值字段的总和</li>
+                            <li><strong>AVG()</strong> - 计算数值字段的平均值</li>
+                            <li><strong>MAX()</strong> - 找出字段中的最大值</li>
+                            <li><strong>MIN()</strong> - 找出字段中的最小值</li>
+                            <li><strong>DISTINCT</strong> - 去除重复值，返回唯一值</li>
+                            <li><strong>CASE</strong> - 条件判断语句，类似于编程中的if-else，用于实现条件逻辑</li>
+                        </ul>
+                        
+                        <h4>操作符</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>=</strong> - 等于</li>
+                            <li><strong>></strong> - 大于</li>
+                            <li><strong><</strong> - 小于</li>
+                            <li><strong>LIKE</strong> - 模糊匹配，支持%通配符</li>
+                            <li><strong>IN</strong> - 在指定值列表中匹配</li>
+                            <li><strong>AND</strong> - 逻辑与，所有条件都满足</li>
+                            <li><strong>OR</strong> - 逻辑或，任一条件满足</li>
+                        </ul>
+                        
+                        <h4>操作提示</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li>将鼠标悬停在下方的语法按钮上，查看详细用法和示例</li>
+                            <li>点击语法按钮可以快速插入SQL片段到编辑器</li>
+                            <li>在编辑器中输入SQL语句，点击"执行SQL"按钮查看结果</li>
+                            <li>可以尝试不同的SQL语法，体验执行效果</li>
+                            <li>点击"查看表结构"按钮可以查看所有表的详细信息和数据</li>
+                        </ul>
+                        
+                        <h4>示例SQL</h4>
+                        <div style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+                            <p>1. 查询所有学生信息：</p>
+                            <code>SELECT * FROM student;</code>
+                            <p>2. 查询学生姓名和年龄：</p>
+                            <code>SELECT name, age FROM student;</code>
+                            <p>3. 查询年龄大于18的学生：</p>
+                            <code>SELECT * FROM student WHERE age > 18;</code>
+                            <p>4. 按年龄降序排序：</p>
+                            <code>SELECT * FROM student ORDER BY age DESC;</code>
+                            <p>5. 统计每个班级的学生人数：</p>
+                            <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id;</code>
+                            <p>6. 查询学生人数大于2的班级：</p>
+                            <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 2;</code>
+                            <p>7. 根据年龄对学生分组：</p>
+                            <code>SELECT name, CASE WHEN age >= 18 THEN '成年' ELSE '未成年' END AS age_group FROM student;</code>
+                            <p>8. 查询姓名中包含'张'的学生：</p>
+                            <code>SELECT * FROM student WHERE name LIKE '%张%';</code>
+                            <p>9. 查询班级ID为1或2的学生：</p>
+                            <code>SELECT * FROM student WHERE class_id IN (1, 2);</code>
+                            <p>10. 查询年龄大于18且班级ID为1的学生：</p>
+                            <code>SELECT * FROM student WHERE age > 18 AND class_id = 1;</code>
+                        </div>
+                    </div>
+                `;
+                
+                // 清空编辑器
+                document.getElementById('sql-editor').value = '';
+                document.getElementById('execution-time').textContent = '执行时间：0ms';
+            } else {
+                // 更新关卡信息
+                document.getElementById('level-title').textContent = level.title;
+                document.getElementById('level-description').textContent = level.description;
+                document.getElementById('level-target').textContent = level.description;
+                document.getElementById('level-hint').style.display = 'none';
+                
+                // 更新表结构信息
+                updateTableInfo(level.tables);
+                
+                // 清空编辑器和结果
+                document.getElementById('sql-editor').value = '';
+                document.getElementById('result-area').innerHTML = '执行结果将显示在这里';
+                document.getElementById('execution-time').textContent = '执行时间：0ms';
+            }
+        }
+        
+        // 更新表信息
+        function updateTableInfo(tableNames) {
+            const tablesElement = document.getElementById('level-tables');
+            tablesElement.innerHTML = '';
+            
+            tableNames.forEach(tableName => {
+                const table = tables[tableName];
+                if (table) {
+                    const tableDiv = document.createElement('div');
+                    tableDiv.className = 'table-structure';
+                    tableDiv.innerHTML = `
+                        <div class="table-name">${table.name}</div>
+                        <div class="table-fields">
+                            ${table.fields.map(field => 
+                                `<div class="field-item">${field.name} (${field.type}): ${field.description}</div>`
+                            ).join('')}
+                        </div>
+                    `;
+                    tablesElement.appendChild(tableDiv);
+                }
+            });
+        }
+        
+        // 插入语法
+        function insertSyntax(syntax) {
+            const editor = document.getElementById('sql-editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            
+            let insertText = syntax;
+            // 特殊处理
+            if (syntax === 'SELECT') {
+                insertText = 'SELECT ';
+            } else if (syntax === 'FROM') {
+                insertText = ' FROM ';
+            } else if (syntax === 'WHERE') {
+                insertText = ' WHERE ';
+            } else if (syntax === 'ORDER BY') {
+                insertText = ' ORDER BY ';
+            } else if (syntax === 'GROUP BY') {
+                insertText = ' GROUP BY ';
+            } else if (syntax === 'JOIN') {
+                insertText = ' JOIN ';
+            } else if (syntax === 'LIMIT') {
+                insertText = ' LIMIT ';
+            } else if (syntax === 'AS') {
+                insertText = ' AS ';
+            } else if (syntax === '= (等于)') {
+                insertText = ' = ';
+            } else if (syntax === '> (大于)') {
+                insertText = ' > ';
+            } else if (syntax === '< (小于)') {
+                insertText = ' < ';
+            }
+            
+            editor.value = text.substring(0, start) + insertText + text.substring(end);
+            editor.focus();
+            editor.selectionStart = start + insertText.length;
+            editor.selectionEnd = start + insertText.length;
+        }
+        
+        // 执行SQL
+        function executeSQL() {
+            const sql = document.getElementById('sql-editor').value.trim();
+            if (!sql) {
+                showResult('请输入SQL语句', 'error');
+                return;
+            }
+            
+            const startTime = performance.now();
+            
+            try {
+                // 真实SQL执行
+                const result = executeRealSQL(sql);
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                // 更新执行时间
+                document.getElementById('execution-time').textContent = `执行时间：${executionTime}ms`;
+                
+                // 显示结果
+                showResult(result, 'success');
+                
+                // 验证答案（仅在非序章关卡）
+                if (currentLevel && currentLevel.id !== 0) {
+                    if (validateAnswer(sql)) {
+                        // 显示验证成功
+                        const resultArea = document.getElementById('result-area');
+                        resultArea.innerHTML += `<div class="verification-result verification-success">✓ 答案正确！闯关成功！</div>`;
+                        markLevelComplete(currentLevel.id);
+                    } else {
+                        // 显示验证失败
+                        const resultArea = document.getElementById('result-area');
+                        resultArea.innerHTML += `<div class="verification-result verification-error">✗ 结果与预期不符，请检查SQL逻辑</div>`;
+                    }
+                }
+            } catch (error) {
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                document.getElementById('execution-time').textContent = `执行时间：${executionTime}ms`;
+                showResult(`执行错误：${error.message}`, 'error');
+            }
+        }
+        
+        // 真实SQL执行
+        function executeRealSQL(sql) {
+            if (!db) {
+                throw new Error('数据库未初始化');
+            }
+            
+            try {
+                // 执行SQL
+                const result = db.exec(sql);
+                
+                // 处理查询结果
+                if (result.length > 0) {
+                    const statement = result[0];
+                    if (statement.columns && statement.values) {
+                        // 构建结果数据
+                        const data = statement.values.map(row => {
+                            const item = {};
+                            statement.columns.forEach((column, index) => {
+                                item[column] = row[index];
+                            });
+                            return item;
+                        });
+                        return formatTable(data);
+                    } else {
+                        return '<div class="success-message">SQL执行成功</div>';
+                    }
+                } else {
+                    return '<div class="success-message">SQL执行成功</div>';
+                }
+            } catch (error) {
+                throw new Error(error.message);
+            }
+        }
+        
+        // 格式化表格
+        function formatTable(data) {
+            if (!data || data.length === 0) {
+                return '<div>无结果</div>';
+            }
+            
+            const keys = Object.keys(data[0]);
+            let table = '<table class="result-table"><thead><tr>';
+            
+            // 表头
+            keys.forEach(key => {
+                table += `<th>${key}</th>`;
+            });
+            table += '</tr></thead><tbody>';
+            
+            // 数据行
+            data.forEach(row => {
+                table += '<tr>';
+                keys.forEach(key => {
+                    table += `<td>${row[key]}</td>`;
+                });
+                table += '</tr>';
+            });
+            
+            table += '</tbody></table>';
+            return table;
+        }
+        
+        // 验证答案
+        function validateAnswer(sql) {
+            if (!currentLevel) return false;
+            
+            // 简单的答案验证，实际项目中可能需要更复杂的逻辑
+            const normalizedSQL = sql.trim().toUpperCase().replace(/\s+/g, ' ');
+            const normalizedAnswer = currentLevel.answer.trim().toUpperCase().replace(/\s+/g, ' ');
+            
+            return normalizedSQL === normalizedAnswer;
+        }
+        
+        // 标记关卡完成
+        function markLevelComplete(levelId) {
+            completedLevels.add(levelId);
+            saveProgress();
+            
+            const levelItem = document.querySelector(`.level-item[data-level="${levelId}"]`);
+            if (levelItem) {
+                levelItem.classList.add('completed');
+            }
+        }
+        
+        // 显示表结构
+        function showTableStructure() {
+            if (!currentLevel) return;
+            
+            let structureHTML = '<h3>表结构与数据</h3>';
+            currentLevel.tables.forEach(tableName => {
+                const table = tables[tableName];
+                if (table) {
+                    // 显示表结构
+                    structureHTML += `
+                        <div style="margin-bottom: 20px;">
+                            <h4>${table.name}</h4>
+                            <div style="margin-bottom: 10px;">
+                                <strong>字段结构：</strong>
+                                <ul style="margin-left: 20px;">
+                                    ${table.fields.map(field => 
+                                        `<li>${field.name} (${field.type}): ${field.description}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                    `;
+                    
+                    // 显示表数据
+                    if (db) {
+                        try {
+                            const result = db.exec(`SELECT * FROM ${tableName}`);
+                            if (result.length > 0 && result[0].columns && result[0].values) {
+                                const columns = result[0].columns;
+                                const values = result[0].values;
+                                
+                                structureHTML += `
+                                    <div>
+                                        <strong>表数据：</strong>
+                                        <table class="result-table" style="margin-top: 5px;">
+                                            <thead>
+                                                <tr>
+                                                    ${columns.map(col => `<th>${col}</th>`).join('')}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${values.map(row => `
+                                                    <tr>
+                                                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                `;
+                            } else {
+                                structureHTML += '<div style="margin-top: 5px;"><em>该表暂无数据</em></div>';
+                            }
+                        } catch (error) {
+                            structureHTML += `<div style="margin-top: 5px; color: #d32f2f;">无法获取表数据: ${error.message}</div>`;
+                        }
+                    } else {
+                        structureHTML += '<div style="margin-top: 5px; color: #d32f2f;">数据库未初始化</div>';
+                    }
+                    
+                    structureHTML += '</div>';
+                }
+            });
+            
+            showResult(structureHTML, 'success');
+        }
+        
+        // 显示结果
+        function showResult(content, type) {
+            const resultArea = document.getElementById('result-area');
+            if (type === 'error') {
+                resultArea.innerHTML = `<div class="error-message">${content}</div>`;
+            } else {
+                resultArea.innerHTML = content;
+            }
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
