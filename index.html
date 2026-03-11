@@ -24,6 +24,78 @@
             height: 100vh;
         }
         
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: 100vh;
+            }
+            
+            .level-list {
+                max-height: 30vh;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .level-item {
+                font-size: 16px;
+                padding: 12px 16px;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+            
+            .syntax-buttons {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            
+            .syntax-btn {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .action-buttons {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .action-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+        
+        /* 小屏幕手机适配 */
+        @media (max-width: 480px) {
+            .level-list {
+                padding: 12px;
+            }
+            
+            .level-header {
+                font-size: 16px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            .level-title {
+                font-size: 18px;
+            }
+            
+            .syntax-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-btn {
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+        }
+        
         /* 左侧关卡列表 */
         .level-list {
             background-color: #fff;
@@ -94,6 +166,15 @@
             transform: translateY(-50%);
             color: #f57f17;
             font-size: 16px;
+        }
+        
+        /* 触摸反馈样式 */
+        .level-item.touch-active,
+        .syntax-btn.touch-active,
+        .action-btn.touch-active {
+            transform: scale(0.95);
+            opacity: 0.8;
+            transition: all 0.1s ease;
         }
         
         .level-item {
@@ -972,7 +1053,21 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
         function bindEvents() {
             // 关卡点击事件
             document.querySelectorAll('.level-item').forEach(item => {
+                // 点击事件（支持触摸和鼠标）
                 item.addEventListener('click', () => {
+                    const levelId = parseInt(item.dataset.level);
+                    loadLevel(levelId);
+                });
+                
+                // 触摸事件支持
+                item.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    item.classList.add('touch-active');
+                });
+                
+                item.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    item.classList.remove('touch-active');
                     const levelId = parseInt(item.dataset.level);
                     loadLevel(levelId);
                 });
@@ -983,16 +1078,47 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                     const levelId = parseInt(item.dataset.level);
                     toggleBookmark(levelId);
                 });
+                
+                // 长按事件（移动端替代右键）
+                let longPressTimer;
+                item.addEventListener('touchstart', (e) => {
+                    longPressTimer = setTimeout(() => {
+                        const levelId = parseInt(item.dataset.level);
+                        toggleBookmark(levelId);
+                    }, 500);
+                });
+                
+                item.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                item.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
             });
             
             // 语法按钮点击事件
             document.querySelectorAll('.syntax-btn').forEach(btn => {
+                // 鼠标点击事件
                 btn.addEventListener('click', () => {
                     const syntax = btn.dataset.syntax;
                     insertSyntax(syntax);
                 });
                 
-                // 语法按钮hover事件
+                // 触摸事件支持
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    btn.classList.add('touch-active');
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('touch-active');
+                    const syntax = btn.dataset.syntax;
+                    insertSyntax(syntax);
+                });
+                
+                // 语法按钮hover事件（桌面端）
                 let hoverTimer;
                 btn.addEventListener('mouseenter', (e) => {
                     const example = btn.dataset.example;
@@ -1010,6 +1136,36 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 btn.addEventListener('mouseleave', () => {
                     clearTimeout(hoverTimer);
                     document.getElementById('syntax-tooltip').style.display = 'none';
+                });
+                
+                // 长按事件（移动端替代hover）
+                let longPressTimer;
+                btn.addEventListener('touchstart', (e) => {
+                    const example = btn.dataset.example;
+                    if (example) {
+                        longPressTimer = setTimeout(() => {
+                            const tooltip = document.getElementById('syntax-tooltip');
+                            tooltip.textContent = example;
+                            // 移动端居中显示
+                            tooltip.style.left = '50%';
+                            tooltip.style.top = '50%';
+                            tooltip.style.transform = 'translate(-50%, -50%)';
+                            tooltip.style.display = 'block';
+                            
+                            // 3秒后自动隐藏
+                            setTimeout(() => {
+                                tooltip.style.display = 'none';
+                            }, 3000);
+                        }, 800);
+                    }
+                });
+                
+                btn.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                btn.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
                 });
                 
                 btn.addEventListener('mousemove', (e) => {
