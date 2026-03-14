@@ -1162,17 +1162,7 @@ SELECT * FROM student WHERE age > 18 OR class_id = 1;">OR</button>
                 }
             });
             
-            // 点击主内容区时收起侧边栏（所有设备通用）
-            mainContent.addEventListener('click', (e) => {
-                if (!levelList.classList.contains('collapsed')) {
-                    // 确保点击的不是语法按钮或其他交互元素
-                    if (!e.target.closest('.syntax-btn') && !e.target.closest('.action-btn')) {
-                        levelList.classList.add('collapsed');
-                        mainContent.classList.add('expanded');
-                        sidebarToggle.textContent = '☰';
-                    }
-                }
-            });
+
         }
         
         // 绑定事件
