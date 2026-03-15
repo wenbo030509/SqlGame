@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL学习游戏客户端</title>
+    <title>SQL学习游戏</title>
     <script src="sql-wasm.js"></script>
     <style>
         * {
@@ -655,6 +655,16 @@ SELECT student_id, score, ROW_NUMBER() OVER (ORDER BY score DESC) FROM score;">R
 SELECT student_id, score, DENSE_RANK() OVER (ORDER BY score DESC) FROM score;">DENSE_RANK()</button>
                 <button class="syntax-btn" data-syntax="OVER()" data-example="SELECT column, function() OVER (PARTITION BY column ORDER BY column) FROM table_name;
 SELECT class_id, score, RANK() OVER (PARTITION BY class_id ORDER BY score DESC) FROM score;">OVER()</button>
+                <button class="syntax-btn" data-syntax="CASE" data-example="CASE WHEN condition THEN result [WHEN ...] [ELSE result] END;
+CASE WHEN score >= 90 THEN '优秀' ELSE '其他' END">CASE</button>
+                <button class="syntax-btn" data-syntax="WHEN" data-example="CASE WHEN condition1 THEN result1 WHEN condition2 THEN result2 ... END;
+CASE WHEN age >= 18 THEN '成年' WHEN age >= 12 THEN '青少年' ELSE '儿童' END">WHEN</button>
+                <button class="syntax-btn" data-syntax="THEN" data-example="CASE WHEN condition THEN result END;
+CASE WHEN score >= 60 THEN '及格' END">THEN</button>
+                <button class="syntax-btn" data-syntax="ELSE" data-example="CASE WHEN condition THEN result1 ELSE result2 END;
+CASE WHEN score >= 60 THEN '及格' ELSE '不及格' END">ELSE</button>
+                <button class="syntax-btn" data-syntax="END" data-example="CASE WHEN condition THEN result END;
+CASE WHEN score >= 60 THEN '及格' END">END</button>
             </div>
             
             <!-- 语法提示框 -->
@@ -1438,6 +1448,16 @@ SELECT class_id, score, RANK() OVER (PARTITION BY class_id ORDER BY score DESC) 
                             <li><strong>CASE</strong> - 条件判断语句，类似于编程中的if-else，用于实现条件逻辑</li>
                         </ul>
                         
+                        <h4>CASE条件语句</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 20px;">
+                            <li><strong>CASE</strong> - 开始条件判断语句</li>
+                            <li><strong>WHEN</strong> - 定义条件，可以包含多个WHEN子句</li>
+                            <li><strong>THEN</strong> - 指定条件满足时的返回值</li>
+                            <li><strong>ELSE</strong> - 可选，指定所有条件都不满足时的默认返回值</li>
+                            <li><strong>END</strong> - 结束条件判断语句</li>
+                        </ul>
+                        <p style="margin-left: 20px; margin-bottom: 20px; color: #666;">CASE语句支持多条件判断，适用于成绩等级划分、年龄段分类、状态标记等场景。</p>
+                        
                         <h4>窗口函数</h4>
                         <ul style="margin-left: 20px; margin-bottom: 20px;">
                             <li><strong>RANK()</strong> - 排名函数，为每行数据分配排名，相同值会跳过后续排名（如1,1,3）</li>
@@ -1481,8 +1501,12 @@ SELECT class_id, score, RANK() OVER (PARTITION BY class_id ORDER BY score DESC) 
                             <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id;</code>
                             <p>6. 查询学生人数大于2的班级：</p>
                             <code>SELECT class_id, COUNT(*) FROM student GROUP BY class_id HAVING COUNT(*) > 2;</code>
-                            <p>7. 根据年龄对学生分组：</p>
+                            <p>7. 根据年龄对学生分组（简单CASE）：</p>
                             <code>SELECT name, CASE WHEN age >= 18 THEN '成年' ELSE '未成年' END AS age_group FROM student;</code>
+                            <p>7-1. 多条件成绩等级划分（多WHEN）：</p>
+                            <code>SELECT name, score, CASE WHEN score >= 90 THEN '优秀' WHEN score >= 80 THEN '良好' WHEN score >= 70 THEN '中等' WHEN score >= 60 THEN '及格' ELSE '不及格' END AS grade FROM score JOIN student ON score.student_id = student.id;</code>
+                            <p>7-2. 年龄段分类（复杂条件）：</p>
+                            <code>SELECT name, age, CASE WHEN age >= 18 THEN '成年人' WHEN age >= 12 THEN '青少年' WHEN age >= 6 THEN '儿童' ELSE '幼儿' END AS age_group FROM student;</code>
                             <p>8. 查询姓名中包含'张'的学生：</p>
                             <code>SELECT * FROM student WHERE name LIKE '%张%';</code>
                             <p>9. 查询班级ID为1或2的学生：</p>
