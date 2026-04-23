@@ -66,7 +66,31 @@
 
 ## 快速开始
 
-### 方式一：直接下载使用（推荐）
+### 方式一：桌面应用（推荐，完全离线）
+
+1. **下载安装包**
+   - 下载 `SQL Learning Client-xxx.dmg` 文件
+   - 双击打开DMG文件
+   - 将应用拖入Applications文件夹
+
+2. **运行应用**
+   - 在Launchpad中找到 "SQL Learning Client"
+   - 点击启动即可使用，无需网络连接
+
+### 方式二：Electron开发模式
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发模式
+npm start
+
+# 构建mac安装包
+npm run build:mac
+```
+
+### 方式三：直接下载使用（网页版）
 
 1. **下载项目文件**
    - 点击GitHub页面右上角的 "Code" 按钮
@@ -95,7 +119,7 @@
    http://localhost:8000
    ```
 
-### 方式二：Git克隆（需要Git环境）
+### 方式四：Git克隆（需要Git环境）
 
 ```bash
 git clone https://github.com/wenbo030509/SqlGame.git
@@ -103,7 +127,7 @@ cd SqlGame
 python3 -m http.server 8000
 ```
 
-### 方式三：VS Code Live Server（最简单）
+### 方式五：VS Code Live Server（最简单）
 
 1. 在VS Code中安装 "Live Server" 插件
 2. 打开项目文件夹
@@ -126,12 +150,16 @@ SqlGame/
 ├── index.html          # 主页面
 ├── sql-wasm.js         # SQL.js JavaScript接口
 ├── sql-wasm.wasm       # SQL.js WebAssembly模块
+├── main.js             # Electron主进程入口
+├── package.json        # 项目配置（含Electron构建配置）
+├── .gitignore          # Git忽略文件
 ├── README.md           # 项目说明
+├── README_MOBILE.md    # 移动端说明
+├── dist/               # Electron构建输出目录
 ├── android-app/        # Android应用（可选）
 │   └── ...
-├── ios-app/            # iOS应用（可选）
-│   └── ...
-└── .gitignore          # Git忽略文件
+└── ios-app/            # iOS应用（可选）
+    └── ...
 ```
 
 ## 浏览器支持
