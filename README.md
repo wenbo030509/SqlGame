@@ -78,6 +78,8 @@
 
 下载后无需联网、无需安装 Python 或 Node.js，开箱即用。
 
+> ⚠️ macOS 下载后如提示「文件已损坏」，[点此查看解决方法](#%EF%B8%8F-macos-安装提示文件已损坏解决方法)。
+
 ### 方式二：Python HTTP Server（开发者快速预览）
 
 ```bash
@@ -154,6 +156,49 @@ dist/
 ├── builder-effective-config.yaml
 └── builder-debug.yml
 ```
+
+### ⚠️ macOS 安装提示"文件已损坏"解决方法
+
+macOS Gatekeeper 安全机制会拦截**未签名**的应用（需 $99/年 Apple Developer 证书才能签名）。这是正常现象，应用并未损坏，任选一种方式即可解除：
+
+**方法一：全局关闭 Gatekeeper（一步到位，推荐）**
+
+```bash
+# 步骤 1：关闭 Gatekeeper（需要管理员密码）
+sudo spctl --master-disable
+
+# 步骤 2：打开「系统设置」→「隐私与安全性」
+# 在「安全性」区域，会看到 "Allow applications from: Anywhere" 选项已出现
+# 如果是较新 macOS，可能需要在这里点击「允许」确认
+
+# 步骤 3：验证是否关闭成功
+spctl --status
+# 输出应为：assessments disabled
+
+# 步骤 4：移除目标应用的 quarantine 隔离标记
+sudo xattr -d com.apple.quarantine /Applications/SQL\ Learning\ Client.app
+
+# 步骤 5：（可选）验证隔离属性是否已移除
+xattr -l /Applications/SQL\ Learning\ Client.app
+# 如果不包含 com.apple.quarantine 说明移除成功
+
+# 步骤 6：打开应用
+open /Applications/SQL\ Learning\ Client.app
+```
+
+> 💡 **步骤 2 是必须的**：较新 macOS（Ventura/Sonoma/Sequoia 等）执行 `spctl --master-disable` 后，还需要在 **系统设置 → 隐私与安全性** 中手动确认，否则不会生效。
+>
+> 如果想恢复 Gatekeeper：`sudo spctl --master-enable`
+>
+> 如果不放心全局关闭，可以用**方法二**（仅针对单个应用）。
+
+**方法二：从系统设置允许（仅针对单个应用）**
+
+1. DMG 中双击应用 → 看到「文件已损坏」→ 点「取消」
+2. 打开 **系统设置 → 隐私与安全性**
+3. 页面底部找到「已阻止 SQL Learning Client」→ 点「仍要打开」
+
+---
 
 ## 技术实现
 
