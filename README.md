@@ -53,7 +53,7 @@
 | 17 | HAVING过滤 | 查询学生人数大于3的班级ID |
 | 18 | CASE语句 | 查询学生姓名和成绩等级 |
 | 19 | 日期函数 | 查询学生信息，计算出生年份 |
-| 20 | 综合挑战 | 查询每个班级的平均成绩，并按平均成绩降序排列
+| 20 | 综合挑战 | 查询每个班级的平均成绩，并按平均成绩降序排列 |
 
 ## 内置数据库
 
@@ -66,60 +66,30 @@
 
 ## 快速开始
 
-### 方式一：桌面应用（推荐，完全离线）
+### 方式一：下载安装包（⭐ 推荐，完全离线）
 
-1. **下载安装包**
-   - 下载 `SQL Learning Client-xxx.dmg` 文件
-   - 双击打开DMG文件
-   - 将应用拖入Applications文件夹
+直接从 [Releases](https://github.com/wenbo030509/SqlGame/releases) 页面下载对应系统的安装包：
 
-2. **运行应用**
-   - 在Launchpad中找到 "SQL Learning Client"
-   - 点击启动即可使用，无需网络连接
+| 平台 | 安装包 | 说明 |
+|------|--------|------|
+| **macOS** | `SQL Learning Client-1.0.0.dmg` | 双击打开，拖入 Applications 即可 |
+| **Windows** | `SQL Learning Client Setup 1.0.0.exe` | 安装包，支持自定义安装路径 |
+| **Windows** | `SQL Learning Client 1.0.0.exe` | 便携版，无需安装，双击即用 |
 
-### 方式二：Electron开发模式
+下载后无需联网、无需安装 Python 或 Node.js，开箱即用。
+
+### 方式二：Python HTTP Server（开发者快速预览）
 
 ```bash
-# 安装依赖
-npm install
-
-# 启动开发模式
-npm start
-
-# 构建mac安装包
-npm run build:mac
+cd sql-learning-client
+python3 -m http.server 8000
 ```
 
-### 方式三：直接下载使用（网页版）
+浏览器访问 **http://localhost:8000** 即可使用。
 
-1. **下载项目文件**
-   - 点击GitHub页面右上角的 "Code" 按钮
-   - 选择 "Download ZIP" 下载压缩包
-   - 解压到本地文件夹
+> 也可使用其他本地服务器：`npx http-server -p 8000` / `php -S localhost:8000` / VS Code Live Server 插件
 
-2. **启动本地服务器**
-   ```bash
-   cd SqlGame
-   python3 -m http.server 8000
-   ```
-   或者使用其他方式启动本地服务器：
-   ```bash
-   # 使用Node.js的http-server
-   npx http-server -p 8000
-   
-   # 使用PHP
-   php -S localhost:8000
-   
-   # 使用VS Code的Live Server插件
-   # 右键点击index.html，选择"Open with Live Server"
-   ```
-
-3. **在浏览器中访问**
-   ```
-   http://localhost:8000
-   ```
-
-### 方式四：Git克隆（需要Git环境）
+### 方式三：Git 克隆（需要 Git 环境）
 
 ```bash
 git clone https://github.com/wenbo030509/SqlGame.git
@@ -127,12 +97,63 @@ cd SqlGame
 python3 -m http.server 8000
 ```
 
-### 方式五：VS Code Live Server（最简单）
+### 方式四：Electron 开发模式（需要在本地构建）
 
-1. 在VS Code中安装 "Live Server" 插件
-2. 打开项目文件夹
-3. 右键点击 `index.html` 文件
-4. 选择 "Open with Live Server"
+```bash
+cd sql-learning-client
+npm install
+npm start
+```
+
+---
+
+### 🔨 自行构建安装包
+
+```bash
+cd sql-learning-client
+npm install
+
+# 构建 macOS 安装包（输出到 dist/）
+npm run build:mac
+
+# 构建 Windows 安装包（输出到 dist/）
+npm run build:win
+
+# 同时构建两个平台
+npm run build:all
+```
+
+> 💡 如果下载 Electron 二进制失败（国内网络），已内置 [npmmirror](https://npmmirror.com) 镜像加速，无需额外配置。
+
+| 构建产物 | 平台 | 用途 |
+|----------|------|------|
+| `dist/SQL Learning Client-1.0.0.dmg` | macOS Intel | 发给用户的安装包，双击打开拖入 Applications |
+| `dist/SQL Learning Client-1.0.0-arm64.dmg` | macOS M 芯片 | 同上，Apple Silicon (M1/M2/M3) 版本 |
+| `dist/SQL Learning Client Setup 1.0.0.exe` | Windows | 发给用户的安装程序，支持自定义路径 |
+| `dist/SQL Learning Client 1.0.0.exe` | Windows | 发给用户的便携版，免安装双击即用 |
+
+### 📦 dist/ 目录结构说明
+
+```
+dist/
+│
+│  ── 发给用户的最终产物 ──
+├── SQL Learning Client-1.0.0.dmg             ← macOS Intel DMG 安装镜像
+├── SQL Learning Client-1.0.0-arm64.dmg       ← macOS Apple Silicon DMG 安装镜像
+├── SQL Learning Client Setup 1.0.0.exe       ← Windows NSIS 安装程序
+├── SQL Learning Client 1.0.0.exe             ← Windows 免安装便携版
+│
+│  ── 中间构建产物（可忽略）──
+├── mac/                  ← macOS .app 原始包
+├── mac-arm64/            ← macOS ARM64 .app 原始包
+├── win-unpacked/         ← Windows 未打包目录
+│
+│  ── 元数据（自动更新用，可忽略）──
+├── *.blockmap            ← 差分更新索引
+├── latest-mac.yml        ← macOS 版本清单
+├── builder-effective-config.yaml
+└── builder-debug.yml
+```
 
 ## 技术实现
 
@@ -146,20 +167,22 @@ python3 -m http.server 8000
 ## 项目结构
 
 ```
-SqlGame/
-├── index.html          # 主页面
-├── sql-wasm.js         # SQL.js JavaScript接口
-├── sql-wasm.wasm       # SQL.js WebAssembly模块
-├── main.js             # Electron主进程入口
-├── package.json        # 项目配置（含Electron构建配置）
-├── .gitignore          # Git忽略文件
+sql-learning-client/
+├── index.html          # 主页面（所有游戏逻辑）
+├── sql-wasm.js         # SQL.js JavaScript 接口
+├── sql-wasm.wasm       # SQL.js WebAssembly 模块
+├── main.js             # Electron 主进程入口
+├── package.json        # 项目配置及 Electron 构建配置
+├── package-lock.json   # 依赖锁定文件
+├── .npmrc              # npm 镜像配置（Electron 国内加速）
+├── icon.icns           # macOS 应用图标
+├── icon.ico            # Windows 应用图标
+├── generate_icons.py   # 图标生成脚本
+├── .gitignore          # Git 忽略文件
 ├── README.md           # 项目说明
 ├── README_MOBILE.md    # 移动端说明
-├── dist/               # Electron构建输出目录
-├── android-app/        # Android应用（可选）
-│   └── ...
-└── ios-app/            # iOS应用（可选）
-    └── ...
+├── node_modules/       # 依赖包（npm install 后生成）
+└── dist/               # Electron 构建输出（npm run build 后生成，含 macOS / Windows 安装包）
 ```
 
 ## 浏览器支持
