@@ -7,8 +7,13 @@ build/
 *.dmg
 *.blockmap
 latest-mac.yml
+latest.yml
 builder-effective-config.yaml
 builder-debug.yml
+win-unpacked/
+
+# Temporary icon generation
+icon.iconset/
 
 # Logs
 npm-debug.log*

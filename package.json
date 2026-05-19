@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "build:mac": "electron-builder --mac"
+    "build:mac": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --mac",
+    "build:win": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --win",
+    "build:all": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder --mac --win"
   },
   "keywords": ["sql", "learning", "electron", "offline"],
   "author": "",
@@ -21,6 +23,7 @@
     "directories": {
       "output": "dist"
     },
+    "publish": null,
     "files": [
       "index.html",
       "sql-wasm.js",
@@ -28,8 +31,24 @@
       "main.js"
     ],
     "mac": {
-      "target": "dmg",
-      "icon": "icon.icns"
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "icon.icns",
+      "category": "public.app-category.educational-games"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "SQL Learning Client"
     }
   }
 }
